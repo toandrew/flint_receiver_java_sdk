@@ -27,11 +27,24 @@ public class FlintReceiverManager {
     private static final String IPC_MESSAGE_HEARTBEAT = "heartbeat";
     private static final String IPC_MESSAGE_SENDERCONNECTED = "senderconnected";
     private static final String IPC_MESSAGE_SENDERDISCONNECTED = "senderdisconnected";
+    private static final String IPC_MESSAGE_APPID = "appid";
+
+    private static final String IPC_MESSAGE_DATA = "data";
 
     private static final String IPC_MESSAGE_DATA_TOKEN = "token";
     private static final String IPC_MESSAGE_DATA_HEARTBEAT = "heartbeat";
     private static final String IPC_MESSAGE_DATA_HEARTBEAT_PING = "ping";
     private static final String IPC_MESSAGE_DATA_HEARTBEAT_PONG = "pong";
+
+    private static final String IPC_MESSAGE_DATA_CHANNELBASEURL = "channelBaseUrl";
+    private static final String IPC_MESSAGE_DATA_SERVICE_INFO = "service_info";
+    private static final String IPC_MESSAGE_DATA_SERVICE_INFO_IP = "ip";
+    private static final String IPC_MESSAGE_DATA_ADDITIONALDATA = "additionaldata";
+    private static final String IPC_MESSAGE_DATA_REGISTER = "register";
+    private static final String IPC_MESSAGE_DATA_UNREGISTER = "unregister";
+
+    private static final String IPC_MESSAGE_TYPE_HEARTBEAT = "heartbeat";
+    private static final String IPC_MESSAGE_TYPE_ADDITIONALDATA = "additionaldata";
 
     private String mAppId;
 
@@ -41,7 +54,7 @@ public class FlintReceiverManager {
 
     private String mIpcAddress;
 
-    private String FlintServerIp = "127.0.0.1";
+    private String mFlintServerIp = "127.0.0.1";
 
     private HashMap<String, MessageBus> mMessageBusList = new HashMap<String, MessageBus>();
 
@@ -73,7 +86,13 @@ public class FlintReceiverManager {
                 Log.e(TAG, "ipcChannel opened!!!");
 
                 // send register message
-                ipcSend("type: 'register'");
+                JSONObject register = new JSONObject();
+                try {
+                    register.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_REGISTER);
+                    ipcSend(register);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -95,13 +114,15 @@ public class FlintReceiverManager {
                 // TODO Auto-generated method stub
 
                 Log.e(TAG, "ipcChannel received message: [" + data + "]");
+
                 try {
-                    onIpcMessage(new JSONObject(data));
+                    JSONObject json = new JSONObject(data);
+
+                    onIpcMessage(json);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-
         };
 
         mIpcChannel.open();
@@ -120,7 +141,13 @@ public class FlintReceiverManager {
      */
     public boolean close() {
         if (isOpened()) {
-            ipcSend("type: 'unregister'");
+            JSONObject unregister = new JSONObject();
+            try {
+                unregister.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_UNREGISTER);
+                ipcSend(unregister);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             if (mMessageChannel != null) {
                 mMessageChannel.close();
@@ -171,7 +198,13 @@ public class FlintReceiverManager {
             mMessageChannel = createMessageChannel(FlintConstants.DEFAULT_CHANNEL_NAME);
         }
 
-        return createMessageBusInternal(ns);
+        MessageBus messageBus = mMessageBusList.get(ns);
+        if (messageBus == null) {
+            messageBus = new ReceiverMessageBus(mMessageChannel, ns);
+            mMessageBusList.put(ns, messageBus);
+        }
+
+        return messageBus;
     }
 
     /**
@@ -202,8 +235,17 @@ public class FlintReceiverManager {
     /**
      * Send IPC related message
      */
-    private void ipcSend(String data) {
-        // TODO
+    private void ipcSend(JSONObject data) {
+        JSONObject json = data;
+        try {
+            json.put(IPC_MESSAGE_APPID, mAppId);
+
+            if (mIpcChannel != null) {
+                mIpcChannel.send(data.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -219,12 +261,35 @@ public class FlintReceiverManager {
                 Log.d(TAG, "receiver ready to start heartbeat!!!");
             } else if (type.equals(IPC_MESSAGE_REGISTEROK)) {
                 Log.d(TAG, "receiver register done!!!");
+
+                mFlintServerIp = data
+                        .getJSONObject(IPC_MESSAGE_DATA_SERVICE_INFO)
+                        .getJSONArray(IPC_MESSAGE_DATA_SERVICE_INFO_IP)
+                        .getString(0);
+
+                sendAdditionalData();
             } else if (type.equals(IPC_MESSAGE_HEARTBEAT)) {
                 String t = data.getString(IPC_MESSAGE_DATA_HEARTBEAT);
                 if (t.equals(IPC_MESSAGE_DATA_HEARTBEAT_PING)) {
-                    ipcSend("type: 'heartbeat', heartbeat: 'pong'");
+                    JSONObject pong = new JSONObject();
+                    try {
+                        pong.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_HEARTBEAT);
+                        pong.put(IPC_MESSAGE_TYPE_HEARTBEAT,
+                                IPC_MESSAGE_DATA_HEARTBEAT_PONG);
+                        ipcSend(pong);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else if (t.equals(IPC_MESSAGE_DATA_HEARTBEAT_PONG)) {
-                    ipcSend("type: 'heartbeat', heartbeat: 'ping'");
+                    JSONObject pong = new JSONObject();
+                    try {
+                        pong.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_HEARTBEAT);
+                        pong.put(IPC_MESSAGE_TYPE_HEARTBEAT,
+                                IPC_MESSAGE_DATA_HEARTBEAT_PING);
+                        ipcSend(pong);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     Log.e(TAG, "unknow heartbeat message:" + t);
                 }
@@ -248,9 +313,17 @@ public class FlintReceiverManager {
      * Send additional data
      */
     private void sendAdditionalData() {
-        String additionalData = joinAdditionalData();
+        JSONObject additionalData = joinAdditionalData();
+
         if (additionalData != null) {
-            ipcSend("type: 'additionaldata', additionaldata: " + additionalData);
+            JSONObject data = new JSONObject();
+            try {
+                data.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_ADDITIONALDATA);
+                data.put(IPC_MESSAGE_TYPE_ADDITIONALDATA, additionalData);
+                ipcSend(data);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             Log.e(TAG, "no additionaldata need to send");
         }
@@ -259,8 +332,26 @@ public class FlintReceiverManager {
     /**
      * Get current additional data
      */
-    private String joinAdditionalData() {
-        // TODO
+    private JSONObject joinAdditionalData() {
+        JSONObject additionalData = new JSONObject();
+
+        try {
+            if (mMessageChannel != null) {
+                additionalData.put(IPC_MESSAGE_DATA_CHANNELBASEURL,
+                        "ws://" + mFlintServerIp + ":9439/channels/"
+                                + mMessageChannel.getName());
+            }
+
+            if (mCustAdditionalData != null) {
+                additionalData.put("customData", mCustAdditionalData);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (additionalData.length() > 0) {
+            return additionalData;
+        }
 
         return null;
     }
@@ -298,21 +389,5 @@ public class FlintReceiverManager {
         };
 
         return channel;
-    }
-
-    /**
-     * Create MessageBus obj
-     * 
-     * @param namespace
-     * @return
-     */
-    private MessageBus createMessageBusInternal(String namespace) {
-        MessageBus messageBus = mMessageBusList.get(namespace);
-        if (messageBus == null) {
-            messageBus = new ReceiverMessageBus(mMessageChannel, namespace);
-            mMessageBusList.put(namespace, messageBus);
-        }
-
-        return messageBus;
     }
 }
