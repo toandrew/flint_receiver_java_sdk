@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
 
-        mFlintMediaPlayer.stop();
+        mFlintMediaPlayer.stop(null);
 
         mFlintReceiverManager.close();
 

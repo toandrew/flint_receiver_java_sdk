@@ -8,8 +8,6 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.json.JSONObject;
-
 import android.util.Log;
 
 /**
@@ -75,7 +73,9 @@ public abstract class MessageChannel implements FlintWebSocketListener {
         if (url != null) {
             mUrl = url;
         }
-
+        
+        Log.e(TAG, "open: url[" + mUrl + "]");
+        
         mWebSocket = new FlintWebSocket(this, URI.create(mUrl));
         mWebSocket.connect();
 

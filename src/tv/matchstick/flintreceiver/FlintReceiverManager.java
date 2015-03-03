@@ -1,6 +1,9 @@
 package tv.matchstick.flintreceiver;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.json.JSONObject;
 
@@ -89,6 +92,7 @@ public class FlintReceiverManager {
                 JSONObject register = new JSONObject();
                 try {
                     register.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_REGISTER);
+                    
                     ipcSend(register);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -135,7 +139,7 @@ public class FlintReceiverManager {
     }
 
     /**
-     * Stop to receive messages from Flint Daemon and Sender Apps
+     * Stop to receive messages from Flint Daemon and Sender Apps.
      * 
      * @return the result
      */
@@ -154,9 +158,17 @@ public class FlintReceiverManager {
             }
 
             if (mMessageBusList != null) {
-                for (int i = 0; i < mMessageBusList.size(); i++) {
-                    MessageBus messageBus = mMessageBusList.get(i);
-                    messageBus.close();
+                try {
+                    Iterator<Entry<String, MessageBus>> iter = mMessageBusList
+                            .entrySet().iterator();
+                    while (iter.hasNext()) {
+                        Map.Entry<String, MessageBus> entry = (Map.Entry<String, MessageBus>) iter
+                                .next();
+                        MessageBus bus = (MessageBus) entry.getValue();
+                        bus.close();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
                 mMessageBusList = null;
@@ -175,13 +187,15 @@ public class FlintReceiverManager {
     }
 
     /**
-     * Used to create message bus objects.
+     * Used to set message bus objects.
      * 
      * @param namespace
      *            the message bus's name
+     * @param bus
+     *            Message bus
      * @return
      */
-    public MessageBus createMessageBus(String namespace) {
+    public MessageBus setMessageBus(String namespace, ReceiverMessageBus bus) {
         String ns = namespace;
 
         if (isOpened()) {
@@ -198,13 +212,11 @@ public class FlintReceiverManager {
             mMessageChannel = createMessageChannel(FlintConstants.DEFAULT_CHANNEL_NAME);
         }
 
-        MessageBus messageBus = mMessageBusList.get(ns);
-        if (messageBus == null) {
-            messageBus = new ReceiverMessageBus(mMessageChannel, ns);
-            mMessageBusList.put(ns, messageBus);
-        }
+        bus.setMessageChannel(mMessageChannel);
 
-        return messageBus;
+        mMessageBusList.put(ns, bus);
+
+        return bus;
     }
 
     /**
@@ -241,6 +253,7 @@ public class FlintReceiverManager {
             json.put(IPC_MESSAGE_APPID, mAppId);
 
             if (mIpcChannel != null) {
+                Log.e(TAG, "ipcSend:[" + data.toString() + "]");
                 mIpcChannel.send(data.toString());
             }
         } catch (Exception e) {
@@ -260,13 +273,14 @@ public class FlintReceiverManager {
             if (type.equals(IPC_MESSAGE_STARTHEARTBEAT)) {
                 Log.d(TAG, "receiver ready to start heartbeat!!!");
             } else if (type.equals(IPC_MESSAGE_REGISTEROK)) {
-                Log.d(TAG, "receiver register done!!!");
 
                 mFlintServerIp = data
                         .getJSONObject(IPC_MESSAGE_DATA_SERVICE_INFO)
                         .getJSONArray(IPC_MESSAGE_DATA_SERVICE_INFO_IP)
                         .getString(0);
 
+                Log.d(TAG, "receiver register done!!![" + mFlintServerIp + "]");
+                
                 sendAdditionalData();
             } else if (type.equals(IPC_MESSAGE_HEARTBEAT)) {
                 String t = data.getString(IPC_MESSAGE_DATA_HEARTBEAT);

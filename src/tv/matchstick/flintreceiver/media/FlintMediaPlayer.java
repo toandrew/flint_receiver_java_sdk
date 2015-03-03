@@ -3,10 +3,12 @@ package tv.matchstick.flintreceiver.media;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.json.JSONObject;
+
 import tv.matchstick.flintreceiver.FlintConstants;
 import tv.matchstick.flintreceiver.FlintReceiverManager;
-import tv.matchstick.flintreceiver.MessageBus;
-import tv.matchstick.flintreceiver.media.FlintVideo.FlintMediaMetadata;
+import tv.matchstick.flintreceiver.ReceiverMessageBus;
+import android.util.Log;
 
 /**
  * Flint default media player which can be used to communicate media events with
@@ -25,6 +27,38 @@ public class FlintMediaPlayer {
     public static final String PLAYER_STATE_LOADDING = "LOADDING";
     public static final String PLAYER_STATE_READY = "READY";
 
+    private static final String PAYLOAD = "payload";
+
+    private static final String DATA_REQUESTID = "requestId";
+    private static final String DATA_TYPE = "type";
+
+    private static final String DATA_TYPE_LOAD = "LOAD";
+    private static final String DATA_TYPE_PAUSE = "PAUSE";
+    private static final String DATA_TYPE_PLAY = "PLAY";
+    private static final String DATA_TYPE_SET_VOLUME = "SET_VOLUME";
+    private static final String DATA_TYPE_SEEK = "SEEK";
+    private static final String DATA_TYPE_PING = "PING";
+    private static final String DATA_TYPE_GET_STATUS = "GET_STATUS";
+    private static final String DATA_TYPE_STOP = "STOP";
+
+    private static final String DATA_MEDIA = "media";
+    private static final String DATA_MEDIA_CONTENTID = "contentId";
+    private static final String DATA_MEDIA_CONTENTTYPE = "contentType";
+    private static final String DATA_MEDIA_METADATA = "metadata";
+    private static final String DATA_MEDIA_METADATA_TITLE = "title";
+    private static final String DATA_MEDIA_METADATA_SUBTITLE = "subtitle";
+
+    private static final String DATA_MEDIA_STREAMTYPE = "streamType";
+    private static final String DATA_MEDIA_IMAGES = "images";
+    private static final String DATA_MEDIA_METADATATYPE = "metadataType";
+
+    private static final String DATA_VOLUME = "volume";
+    private static final String DATA_VOLUME_LEVEL = "level";
+
+    private static final String DATA_CURRENTTIME = "currentTime";
+
+    private static final String DATA_CUSTOMDATA = "customData";
+
     private String mStatus = PLAYER_STATE_IDLE;
 
     private String mPlayerState = PLAYER_STATE_IDLE;
@@ -35,7 +69,7 @@ public class FlintMediaPlayer {
 
     private String mUrl;
 
-    private FlintMediaMetadata mMediaMetadata;
+    private JSONObject mMediaMetadata;
 
     private int mVideoVolume;
 
@@ -53,7 +87,7 @@ public class FlintMediaPlayer {
 
     private int mRequestIdGetStatus = 0;
 
-    private int mrequestIdStop = 0;
+    private int mRequestIdStop = 0;
 
     private String mBroadcastSenderId = "*:*";
 
@@ -73,9 +107,9 @@ public class FlintMediaPlayer {
     private final FlintVideo mFlintVideo;
 
     /**
-     * Message bus
+     * Media Message bus
      */
-    private MessageBus mMessageBus;
+    private ReceiverMessageBus mMessageBus;
 
     /**
      * Flint Media Player
@@ -90,8 +124,134 @@ public class FlintMediaPlayer {
 
         mMessageReport = new MessageReport();
 
-        mMessageBus = mReceiverManager
-                .createMessageBus(FlintConstants.MEDIA_NAMESPACE);
+        mMessageBus = new ReceiverMessageBus(FlintConstants.MEDIA_NAMESPACE) {
+
+            @Override
+            public void onSenderConnected(String senderId) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "MediaPlayer received sender connected:" + senderId);
+            }
+
+            @Override
+            public void onSenderDisconnected(String senderId) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "MediaPlayer received sender disconnected:"
+                        + senderId);
+            }
+
+            @Override
+            public void onPayloadMessage(String payload, String senderId) {
+                // TODO Auto-generated method stub
+
+                Log.d(TAG, "Received payload[" + payload + "]senderId["
+                        + senderId + "]");
+
+                // process messages on user part.
+                onMediaMessages(payload);
+
+                // process media messages.
+                try {
+                    JSONObject messageData = new JSONObject(payload);
+                    mRequestId = messageData.getInt(DATA_REQUESTID);
+
+                    String type = messageData.getString(DATA_TYPE);
+                    if (type.endsWith(DATA_TYPE_LOAD)) {
+                        mRequestIdLoad = mRequestId;
+
+                        JSONObject mediaObj = messageData
+                                .getJSONObject(DATA_MEDIA);
+                        String contentId = mediaObj
+                                .getString(DATA_MEDIA_CONTENTID);
+                        String contentType = mediaObj
+                                .getString(DATA_MEDIA_CONTENTTYPE);
+                        JSONObject metaData = mediaObj
+                                .getJSONObject(DATA_MEDIA_METADATA);
+                        String title = metaData
+                                .getString(DATA_MEDIA_METADATA_TITLE);
+                        String subtitle = metaData
+                                .getString(DATA_MEDIA_METADATA_SUBTITLE);
+
+                        load(contentId, contentType, title, subtitle,
+                                messageData);
+
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_PAUSE)) {
+                        mRequestIdPause = mRequestId;
+
+                        pause();
+
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_PLAY)) {
+                        mRequestIdPlay = mRequestId;
+
+                        play();
+
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_SET_VOLUME)) {
+                        mRequestIdSetVolume = mRequestId;
+
+                        JSONObject volumeObj = messageData
+                                .getJSONObject(DATA_VOLUME);
+                        int level = volumeObj.getInt(DATA_VOLUME_LEVEL);
+
+                        changeVolume(level);
+
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_SEEK)) {
+                        mRequestIdSeek = mRequestId;
+
+                        int currentTime = messageData.getInt(DATA_CURRENTTIME);
+
+                        seek(currentTime);
+
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_PING)) {
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_GET_STATUS)) {
+                        mRequestIdGetStatus = mRequestId;
+
+                        mMessageReport.syncPlayerState("");
+
+                        return;
+                    }
+
+                    if (type.endsWith(DATA_TYPE_STOP)) {
+                        mRequestIdStop = mRequestId;
+
+                        JSONObject customData = null;
+                        try {
+                            customData = messageData
+                                    .getJSONObject(DATA_CUSTOMDATA);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        stop(customData);
+
+                        return;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        mReceiverManager.setMessageBus(FlintConstants.MEDIA_NAMESPACE,
+                mMessageBus);
 
         init();
     }
@@ -247,7 +407,6 @@ public class FlintMediaPlayer {
                     }
 
                 });
-
     }
 
     /**
@@ -260,7 +419,7 @@ public class FlintMediaPlayer {
      * @param mediaMetadata
      */
     public void load(String url, String videoType, String title,
-            String subtitle, FlintMediaMetadata mediaMetadata) {
+            String subtitle, JSONObject mediaMetadata) {
         mMediaMetadata = mediaMetadata;
 
         mTitle = title;
@@ -339,14 +498,16 @@ public class FlintMediaPlayer {
 
     /**
      * Process STOP
+     * 
+     * @param custData
      */
-    public void stop() {
+    public void stop(final JSONObject custData) {
         syncExecute(new FlintVideo.Callback() {
 
             @Override
             public void process() {
                 // TODO Auto-generated method stub
-                mFlintVideo.stop();
+                mFlintVideo.stop(custData);
             }
         });
 
@@ -480,7 +641,7 @@ public class FlintMediaPlayer {
          * @return
          */
         private String loadData(String playerState, String idleReason,
-                String requestId, FlintMediaMetadata metadata) {
+                String requestId, JSONObject metadata) {
             String data = "{\"type\": \"MEDIA_STATUS\", " + "\"status\": ["
                     + "{" + "\"mediaSessionId\": 1," + "\"playbackRate\": "
                     + mFlintVideo.getPlaybackRate()
@@ -512,19 +673,44 @@ public class FlintMediaPlayer {
             return data;
         }
 
-        private String getMediaData(FlintMediaMetadata mediaMetadata) {
-            String data = "\"media\": {" + "\"streamType\": "
-                    + mediaMetadata.media.streamType + "," + "\"duration\": "
-                    + mFlintVideo.getDuration() + ", " + "\"contentType\": "
-                    + mediaMetadata.media.contentType + "," + "\"contentId\": "
-                    + mediaMetadata.media.contentId + "," + "\"metadata\": {"
-                    + "\"title\": " + mediaMetadata.media.metadata.title + ","
-                    + "\"subtitle\": " + mediaMetadata.media.metadata.subtitle
-                    + "," + "\"images\": "
-                    + mediaMetadata.media.metadata.images + ","
-                    + "\"metadataType\": "
-                    + mediaMetadata.media.metadata.metadataType + "}";
-            return data;
+        private String getMediaData(JSONObject mediaMetadata) {
+            try {
+                JSONObject mediObj = mediaMetadata.getJSONObject(DATA_MEDIA);
+                String streamType = mediObj.getString(DATA_MEDIA_STREAMTYPE);
+                String contentType = mediObj.getString(DATA_MEDIA_CONTENTTYPE);
+                String contentId = mediObj.getString(DATA_MEDIA_CONTENTID);
+                JSONObject metaData = mediObj
+                        .getJSONObject(DATA_MEDIA_METADATA);
+                String title = metaData.getString(DATA_MEDIA_METADATA_TITLE);
+                String subtitle = metaData
+                        .getString(DATA_MEDIA_METADATA_SUBTITLE);
+                JSONObject images = metaData.getJSONObject(DATA_MEDIA_IMAGES);
+                String metadataType = metaData
+                        .getString(DATA_MEDIA_METADATATYPE);
+
+                String data = "\"media\": {" + "\"streamType\": " + streamType
+                        + "," + "\"duration\": " + mFlintVideo.getDuration()
+                        + ", " + "\"contentType\": " + contentType + ","
+                        + "\"contentId\": " + contentId + ","
+                        + "\"metadata\": {" + "\"title\": " + title + ","
+                        + "\"subtitle\": " + subtitle + "," + "\"images\": "
+                        + images.toString() + "," + "\"metadataType\": "
+                        + metadataType + "}";
+                return data;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
         }
+    }
+
+    /**
+     * Provide user a change to process media payload message.
+     * 
+     * @param payload
+     */
+    public void onMediaMessages(String payload) {
+        Log.e(TAG, "onMediaMessages:" + payload);
     }
 }

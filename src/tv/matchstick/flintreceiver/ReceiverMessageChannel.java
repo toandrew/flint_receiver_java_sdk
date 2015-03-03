@@ -143,7 +143,7 @@ public class ReceiverMessageChannel extends MessageChannel {
                 Map.Entry<String, MessageBus> entry = (Map.Entry<String, MessageBus>) iter
                         .next();
                 MessageBus bus = (MessageBus) entry.getValue();
-                bus.onSenderDisConnected(senderId);
+                bus.onSenderDisconnected(senderId);
             }
         } catch (Exception e) {
             e.printStackTrace();

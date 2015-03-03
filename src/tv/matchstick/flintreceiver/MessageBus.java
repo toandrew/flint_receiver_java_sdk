@@ -11,26 +11,38 @@ import java.util.HashMap;
 public abstract class MessageBus implements FlintWebSocketListener {
     private static final String TAG = "MessageBus";
 
+    public static final String TYPE_NORMAL = "normal";
+    public static final String TYPE_MEDIA = "media";
+    
     MessageChannel mMessageChannel;
     String mNamespace;
 
-    MessageBus(MessageChannel channel, String namespace) {
-        mMessageChannel = channel;
+    public MessageBus(String namespace) {
         mNamespace = namespace;
-
-        mMessageChannel.registerMessageBus(this, mNamespace);
 
         init();
     }
 
-    public abstract void send(String data, String senderId);
-
+    /**
+     * Set related message channel.
+     * 
+     * @param channel
+     */
+    public void setMessageChannel(MessageChannel channel) {
+        mMessageChannel = channel;
+        mMessageChannel.registerMessageBus(this, mNamespace);
+    }
+    
     public abstract void init();
+    
+    public abstract void send(String data, String senderId);
 
     public abstract HashMap<String, String> getSenders();
 
     public void close() {
-        mMessageChannel.unRegisterMessageBus(mNamespace);
+        if (mMessageChannel != null) {
+            mMessageChannel.unRegisterMessageBus(mNamespace);
+        }
     }
 
     /**
@@ -45,10 +57,10 @@ public abstract class MessageBus implements FlintWebSocketListener {
      * 
      * @param senderId
      */
-    public abstract void onSenderDisConnected(String senderId);
+    public abstract void onSenderDisconnected(String senderId);
 
     /**
-     * Called when message received
+     * Called when raw message received
      * 
      * @param data
      * @param senderId

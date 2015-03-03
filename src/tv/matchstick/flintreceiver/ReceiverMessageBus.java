@@ -12,16 +12,22 @@ import android.util.Log;
  * @author jim
  *
  */
-public class ReceiverMessageBus extends MessageBus {
+public abstract class ReceiverMessageBus extends MessageBus {
     private static final String TAG = "ReceiverMessageBus";
 
     private static final String PAYLOAD = "payload";
 
-    ReceiverMessageBus(MessageChannel channel, String namespace) {
-        super(channel, namespace);
+    protected ReceiverMessageBus(String namespace) {
+        super(namespace);
         // TODO Auto-generated constructor stub
     }
 
+    @Override
+    public void init() {
+        // TODO Auto-generated method stub
+        
+    }
+    
     @Override
     public void send(String data, String senderId) {
         // TODO Auto-generated method stub
@@ -33,12 +39,7 @@ public class ReceiverMessageBus extends MessageBus {
 
         return null;
     }
-
-    @Override
-    public void init() {
-        // TODO Auto-generated method stub
-    }
-
+    
     @Override
     public void onSenderConnected(String senderId) {
         // TODO Auto-generated method stub
@@ -46,7 +47,7 @@ public class ReceiverMessageBus extends MessageBus {
     }
 
     @Override
-    public void onSenderDisConnected(String senderId) {
+    public void onSenderDisconnected(String senderId) {
         // TODO Auto-generated method stub
 
     }
@@ -77,8 +78,5 @@ public class ReceiverMessageBus extends MessageBus {
      * @param payload
      * @param senderId
      */
-    public void onPayloadMessage(String payload, String senderId) {
-        Log.d(TAG, "Received payload[" + payload + "]senderId[" + senderId
-                + "]");
-    }
+    public abstract void onPayloadMessage(String payload, String senderId);
 }

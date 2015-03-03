@@ -1,7 +1,8 @@
 package tv.matchstick.flintreceiver.media;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+
+import org.json.JSONObject;
 
 /**
  * Flint Video element
@@ -199,42 +200,27 @@ public class FlintVideo {
      * Pause video.
      */
     public void pause() {
-
     }
 
     /**
      * Play video.
      */
     public void play() {
-
     }
 
     /**
      * Stop video.
+     * 
+     * @param custData
      */
-    public void stop() {
-
+    public void stop(JSONObject custData) {
     }
 
+    /**
+     * Callback functions
+     *
+     */
     static abstract class Callback {
         public abstract void process();
-    }
-
-    static class FlintMediaMetadata {
-        public FlintMedia media;
-    }
-
-    static class FlintMedia {
-        public String streamType;
-        public String contentType;
-        public String contentId;
-        public FlintMetadata metadata;
-    }
-
-    static class FlintMetadata {
-        public String title;
-        public String subtitle;
-        public ArrayList<String> images;
-        public String metadataType;
     }
 }
