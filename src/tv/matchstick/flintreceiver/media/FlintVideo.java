@@ -12,7 +12,8 @@ import org.json.JSONObject;
  * @author jim
  *
  */
-public class FlintVideo {
+public abstract class FlintVideo {
+    private static final String TAG = "FlintVideo";
 
     // video events
     public static final String EMPTIED = "emptied";
@@ -26,6 +27,8 @@ public class FlintVideo {
     public static final String WAITING = "waiting";
 
     public static final String PAUSE = "pause";
+
+    public static final String STOP = "stop";
 
     public static final String ENDED = "ended";
 
@@ -52,15 +55,9 @@ public class FlintVideo {
 
     HashMap<String, Callback> mListeners;
 
-    private int mVolume = 0;
-
     private double mDuration = 0;
 
     private double mPlaybackRate = 0;
-
-    private double mCurrentTime = 0;
-
-    private boolean mMuted = false;
 
     private String mUrl;
 
@@ -96,26 +93,40 @@ public class FlintVideo {
      * @param volume
      * @return
      */
-    public void setVolume(int volume) {
-        mVolume = volume;
-    }
+    abstract public void setVolume(double volume);
 
     /**
      * Get current media volume
      * 
      * @return
      */
-    public int getVolume() {
-        return mVolume;
-    }
+    abstract public double getVolume();
 
     /**
      * Get video's duration
      * 
-     * @return
+     * @param duration
+     *            the duration in milliseconds
      */
     public double getDuration() {
         return mDuration;
+    }
+
+    /**
+     * Set video's duration
+     * 
+     * @param duration
+     *            the duration in milliseconds
+     */
+    public void setDuration(double duration) {
+        mDuration = duration;
+    }
+
+    /**
+     * Set video's playback rate
+     */
+    public void setPlaybackRate(double rate) {
+        mPlaybackRate = rate;
     }
 
     /**
@@ -131,28 +142,23 @@ public class FlintVideo {
      * Set current video's play position
      * 
      * @param time
+     *            the current time in milliseconds
      */
-    public void setCurrentTime(double time) {
-        mCurrentTime = time;
-    }
+    abstract public void setCurrentTime(double time);
 
     /**
      * Get current Time
      * 
-     * @return
+     * @return the current time in milliseconds
      */
-    public double getCurrentTime() {
-        return mCurrentTime;
-    }
+    abstract public double getCurrentTime();
 
     /**
      * Whether video is muted
      * 
      * @return
      */
-    public boolean isMuted() {
-        return mMuted;
-    }
+    abstract public boolean isMuted();
 
     /**
      * Set play url
@@ -175,8 +181,7 @@ public class FlintVideo {
     /**
      * Ready to load video.
      */
-    public void load() {
-    }
+    abstract public void load();
 
     /**
      * Set whether autoplay
@@ -199,28 +204,47 @@ public class FlintVideo {
     /**
      * Pause video.
      */
-    public void pause() {
-    }
+    abstract public void pause();
 
     /**
      * Play video.
      */
-    public void play() {
-    }
+    abstract public void play();
+
+    /**
+     * Seek video
+     * 
+     * @param time
+     *            the seeked time in milliseconds
+     */
+    abstract public void seek(double time);
 
     /**
      * Stop video.
      * 
      * @param custData
      */
-    public void stop(JSONObject custData) {
-    }
+    abstract public void stop(JSONObject custData);
 
     /**
      * Callback functions
      *
      */
     static abstract class Callback {
-        public abstract void process();
+        public abstract void process(String data);
+    }
+
+    /**
+     * Notify something is happened.
+     * 
+     * @param type
+     * @param data
+     */
+    public void notifyEvents(String type, String data) {
+        Callback callback = mListeners.get(type);
+
+        if (callback != null) {
+            callback.process(data);
+        }
     }
 }

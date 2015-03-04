@@ -253,8 +253,8 @@ public class FlintReceiverManager {
             json.put(IPC_MESSAGE_APPID, mAppId);
 
             if (mIpcChannel != null) {
-                Log.e(TAG, "ipcSend:[" + data.toString() + "]");
-                mIpcChannel.send(data.toString());
+                Log.e(TAG, "ipcSend:[" + json.toString() + "]");
+                mIpcChannel.send(json.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();

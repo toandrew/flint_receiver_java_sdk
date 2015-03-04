@@ -3,6 +3,7 @@ package tv.matchstick.flintreceiver.media;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tv.matchstick.flintreceiver.FlintConstants;
@@ -71,7 +72,7 @@ public class FlintMediaPlayer {
 
     private JSONObject mMediaMetadata;
 
-    private int mVideoVolume;
+    private double mVideoVolume;
 
     private int mRequestId = 0;
 
@@ -89,7 +90,7 @@ public class FlintMediaPlayer {
 
     private int mRequestIdStop = 0;
 
-    private String mBroadcastSenderId = "*:*";
+    private static final String BROADCAST_SENDER_ID = "*:*";
 
     /**
      * Flint receiver manager
@@ -168,10 +169,10 @@ public class FlintMediaPlayer {
                                 .getString(DATA_MEDIA_CONTENTTYPE);
                         JSONObject metaData = mediaObj
                                 .getJSONObject(DATA_MEDIA_METADATA);
-                        String title = metaData
-                                .getString(DATA_MEDIA_METADATA_TITLE);
-                        String subtitle = metaData
-                                .getString(DATA_MEDIA_METADATA_SUBTITLE);
+                        String title = metaData.optString(
+                                DATA_MEDIA_METADATA_TITLE, "");
+                        String subtitle = metaData.optString(
+                                DATA_MEDIA_METADATA_SUBTITLE, "");
 
                         load(contentId, contentType, title, subtitle,
                                 messageData);
@@ -200,7 +201,7 @@ public class FlintMediaPlayer {
 
                         JSONObject volumeObj = messageData
                                 .getJSONObject(DATA_VOLUME);
-                        int level = volumeObj.getInt(DATA_VOLUME_LEVEL);
+                        double level = volumeObj.getDouble(DATA_VOLUME_LEVEL);
 
                         changeVolume(level);
 
@@ -212,7 +213,7 @@ public class FlintMediaPlayer {
 
                         int currentTime = messageData.getInt(DATA_CURRENTTIME);
 
-                        seek(currentTime);
+                        seek(currentTime * 1000); // convert from "s" to "ms".
 
                         return;
                     }
@@ -224,6 +225,7 @@ public class FlintMediaPlayer {
                     if (type.endsWith(DATA_TYPE_GET_STATUS)) {
                         mRequestIdGetStatus = mRequestId;
 
+                        Log.e(TAG, "Received GET_STATUS Request!");
                         mMessageReport.syncPlayerState("");
 
                         return;
@@ -261,7 +263,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.idle(FlintVideo.IDLE_REASON_NONE);
@@ -273,7 +275,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mStatus = "READY";
@@ -287,7 +289,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.playing();
@@ -299,7 +301,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.playing();
@@ -311,7 +313,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.buffering();
@@ -323,7 +325,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.paused();
@@ -335,7 +337,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.idle(FlintVideo.IDLE_REASON_FINISHED);
@@ -347,7 +349,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mVideoVolume = mFlintVideo.getVolume();
@@ -362,7 +364,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport
@@ -375,7 +377,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport
@@ -388,7 +390,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.idle(FlintVideo.IDLE_REASON_ERROR);
@@ -400,7 +402,7 @@ public class FlintMediaPlayer {
                 new FlintVideo.Callback() {
 
                     @Override
-                    public void process() {
+                    public void process(String data) {
                         // TODO Auto-generated method stub
 
                         mMessageReport.idle(FlintVideo.IDLE_REASON_INTERRUPTED);
@@ -422,6 +424,8 @@ public class FlintMediaPlayer {
             String subtitle, JSONObject mediaMetadata) {
         mMediaMetadata = mediaMetadata;
 
+        Log.e(TAG, "mMediaMetadata: " + mMediaMetadata.toString());
+
         mTitle = title;
 
         mSubtitle = subtitle;
@@ -430,9 +434,9 @@ public class FlintMediaPlayer {
 
         mFlintVideo.setUrl(mUrl);
 
-        mFlintVideo.load();
-
         mFlintVideo.setAutoPlay(true);
+
+        mFlintVideo.load();
     }
 
     /**
@@ -442,8 +446,9 @@ public class FlintMediaPlayer {
         syncExecute(new FlintVideo.Callback() {
 
             @Override
-            public void process() {
+            public void process(String data) {
                 // TODO Auto-generated method stub
+
                 mFlintVideo.pause();
             }
 
@@ -457,8 +462,9 @@ public class FlintMediaPlayer {
         syncExecute(new FlintVideo.Callback() {
 
             @Override
-            public void process() {
+            public void process(String data) {
                 // TODO Auto-generated method stub
+
                 mFlintVideo.play();
             }
 
@@ -472,9 +478,10 @@ public class FlintMediaPlayer {
         syncExecute(new FlintVideo.Callback() {
 
             @Override
-            public void process() {
+            public void process(String data) {
                 // TODO Auto-generated method stub
-                mFlintVideo.setCurrentTime(time);
+
+                mFlintVideo.seek(time);
             }
 
         });
@@ -483,12 +490,13 @@ public class FlintMediaPlayer {
     /**
      * Process change volume
      */
-    public void changeVolume(final int volume) {
+    public void changeVolume(final double volume) {
         syncExecute(new FlintVideo.Callback() {
 
             @Override
-            public void process() {
+            public void process(String data) {
                 // TODO Auto-generated method stub
+
                 mFlintVideo.setVolume(volume);
             }
         });
@@ -505,8 +513,9 @@ public class FlintMediaPlayer {
         syncExecute(new FlintVideo.Callback() {
 
             @Override
-            public void process() {
+            public void process(String data) {
                 // TODO Auto-generated method stub
+
                 mFlintVideo.stop(custData);
             }
         });
@@ -521,7 +530,7 @@ public class FlintMediaPlayer {
      */
     private void syncExecute(final FlintVideo.Callback readyCallBack) {
         if (mStatus.equals(PLAYER_STATE_READY)) {
-            readyCallBack.process();
+            readyCallBack.process("");
             return;
         }
 
@@ -567,39 +576,47 @@ public class FlintMediaPlayer {
          * Process IDLE
          */
         public void idle(String reason) {
+            mPlayerState = PLAYER_STATE_IDLE;
+
             String messageData = loadData(PLAYER_STATE_IDLE, reason, null, null);
 
-            mMessageBus.send(messageData, mBroadcastSenderId);
+            mMessageBus.send(messageData, BROADCAST_SENDER_ID);
         }
 
         /**
          * Process LOAD META DATA.
          */
         public void loadmetadata() {
+            mPlayerState = PLAYER_STATE_PLAYING;
+
             String messageData = loadData(PLAYER_STATE_PLAYING, null,
                     mRequestIdLoad + "", mMediaMetadata);
 
-            mMessageBus.send(messageData, mBroadcastSenderId);
+            mMessageBus.send(messageData, BROADCAST_SENDER_ID);
         }
 
         /**
          * Process PLAYING
          */
         public void playing() {
+            mPlayerState = PLAYER_STATE_PLAYING;
+
             String messageData = loadData(PLAYER_STATE_PLAYING, null,
                     mRequestIdPlay + "", null);
 
-            mMessageBus.send(messageData, mBroadcastSenderId);
+            mMessageBus.send(messageData, BROADCAST_SENDER_ID);
         }
 
         /**
          * Process PAUSED.
          */
         public void paused() {
+            mPlayerState = PLAYER_STATE_PAUSED;
+
             String messageData = loadData(PLAYER_STATE_PAUSED, null,
                     mRequestIdPause + "", null);
 
-            mMessageBus.send(messageData, mBroadcastSenderId);
+            mMessageBus.send(messageData, BROADCAST_SENDER_ID);
         }
 
         /**
@@ -608,10 +625,12 @@ public class FlintMediaPlayer {
          * @return
          */
         public void buffering() {
+            mPlayerState = PLAYER_STATE_BUFFERING;
+
             String messageData = loadData(PLAYER_STATE_BUFFERING, null, null,
                     null);
 
-            mMessageBus.send(messageData, mBroadcastSenderId);
+            mMessageBus.send(messageData, BROADCAST_SENDER_ID);
         }
 
         /**
@@ -632,7 +651,14 @@ public class FlintMediaPlayer {
                 messageData = loadData(mPlayerState, null, null, mMediaMetadata);
             }
 
-            mMessageBus.send(messageData, mBroadcastSenderId);
+            try {
+                Log.e(TAG, "messageData:" + messageData + "]["
+                        + (new JSONObject(messageData)).toString());
+
+                mMessageBus.send(messageData, BROADCAST_SENDER_ID);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         /**
@@ -642,32 +668,32 @@ public class FlintMediaPlayer {
          */
         private String loadData(String playerState, String idleReason,
                 String requestId, JSONObject metadata) {
-            String data = "{\"type\": \"MEDIA_STATUS\", " + "\"status\": ["
-                    + "{" + "\"mediaSessionId\": 1," + "\"playbackRate\": "
+            String data = "{\"type\":\"MEDIA_STATUS\"," + "\"status\":[" + "{"
+                    + "\"mediaSessionId\":1," + "\"playbackRate\":"
                     + mFlintVideo.getPlaybackRate()
                     + ","
-                    + "\"currentTime\": "
-                    + mFlintVideo.getCurrentTime()
+                    + "\"currentTime\":"
+                    + mFlintVideo.getCurrentTime() / 1000 // convert to "s"?!
                     + ","
-                    + "\"duration\": "
-                    + mFlintVideo.getDuration()
+                    + "\"duration\":"
+                    + mFlintVideo.getDuration() / 1000 // convert to "s"!
                     + ","
-                    + "\"supportedMediaCommands\": 15,"
-                    + "\"volume\": {"
+                    + "\"supportedMediaCommands\":15,"
+                    + "\"volume\":{"
                     + "\"level\":"
                     + mFlintVideo.getVolume()
                     + ","
-                    + "\"muted\": "
+                    + "\"muted\":"
                     + mFlintVideo.isMuted()
                     + "}"
-                    + (playerState != null ? "\"playerState\": " + playerState
-                            + "," : "")
-                    + (idleReason != null ? "\"idleReason\": " + idleReason
-                            + "," : "")
-                    + (metadata != null ? getMediaData(metadata) : "")
+                    + (playerState != null ? "," + "\"playerState\":\""
+                            + playerState + "\"" : "")
+                    + (idleReason != null ? "," + "\"idleReason\":\""
+                            + idleReason + "\"" : "")
+                    + (metadata != null ? "," + getMediaData(metadata) : "")
                     + "}"
-                    + "]"
-                    + "\"requestId\": "
+                    + "],"
+                    + "\"requestId\":"
                     + (requestId != null ? requestId : "0") + "}";
 
             return data;
@@ -681,21 +707,31 @@ public class FlintMediaPlayer {
                 String contentId = mediObj.getString(DATA_MEDIA_CONTENTID);
                 JSONObject metaData = mediObj
                         .getJSONObject(DATA_MEDIA_METADATA);
-                String title = metaData.getString(DATA_MEDIA_METADATA_TITLE);
-                String subtitle = metaData
-                        .getString(DATA_MEDIA_METADATA_SUBTITLE);
-                JSONObject images = metaData.getJSONObject(DATA_MEDIA_IMAGES);
+                String title = metaData
+                        .optString(DATA_MEDIA_METADATA_TITLE, "");
+                String subtitle = metaData.optString(
+                        DATA_MEDIA_METADATA_SUBTITLE, "");
+                JSONArray images = null;
+                try {
+                    images = metaData.getJSONArray(DATA_MEDIA_IMAGES);
+                } catch (Exception e) {
+                    images = new JSONArray();
+                }
+
                 String metadataType = metaData
                         .getString(DATA_MEDIA_METADATATYPE);
 
-                String data = "\"media\": {" + "\"streamType\": " + streamType
-                        + "," + "\"duration\": " + mFlintVideo.getDuration()
-                        + ", " + "\"contentType\": " + contentType + ","
-                        + "\"contentId\": " + contentId + ","
-                        + "\"metadata\": {" + "\"title\": " + title + ","
-                        + "\"subtitle\": " + subtitle + "," + "\"images\": "
-                        + images.toString() + "," + "\"metadataType\": "
-                        + metadataType + "}";
+                String data = "\"media\":{" + "\"streamType\":\""
+                        + streamType
+                        + "\","
+                        + "\"duration\":"
+                        + mFlintVideo.getDuration() / 1000 // conver to "s"!
+                        + "," + "\"contentType\":\"" + contentType + "\","
+                        + "\"contentId\":\"" + contentId + "\","
+                        + "\"metadata\":{" + "\"title\":\"" + title + "\","
+                        + "\"subtitle\":\"" + subtitle + "\"," + "\"images\":"
+                        + images.toString() + "," + "\"metadataType\":\""
+                        + metadataType + "\"}}";
                 return data;
             } catch (Exception e) {
                 e.printStackTrace();

@@ -1,5 +1,7 @@
 package tv.matchstick.flintreceiver;
 
+import org.json.JSONObject;
+
 import tv.matchstick.flintreceiver.media.FlintMediaPlayer;
 import tv.matchstick.flintreceiver.media.FlintVideo;
 import android.app.Activity;
@@ -7,19 +9,208 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
+import android.media.MediaPlayer.OnInfoListener;
+import android.media.MediaPlayer.OnPreparedListener;
+import android.media.MediaPlayer.OnSeekCompleteListener;
+import android.media.MediaPlayer.OnVideoSizeChangedListener;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
-public class MainActivity extends Activity {
+/**
+ * This is test application which will use Flint Java Receiver SDK.
+ * 
+ * How to use thes Java Receiver SDK?
+ *
+ * 1. Make sure "FlintReceiverManager" object is created. mFlintReceiverManager
+ * = new FlintReceiverManager(APPID); // APPID("~flintplayer") IS OUR DEFAULT
+ * MEDIA PLAYER APPLICATION'S ID.
+ *
+ * 2. Create concrete "FlingVideo" object and implements all abstract functions.
+ * mFlintVideo = new MyFlintVideo(); // MyFlintVideo is extended from the
+ * abstract class FlintVideo.
+ *
+ * 3. Create FlintMediaPlayer object which will handle all Flint media player
+ * related messages. mFlintMediaPlayer = new
+ * FlintMediaPlayer(mFlintReceiverManager, mFlintVideo);
+ *
+ * 4. Call "open" of FlintReceiverManager to receive and process all Flint media
+ * related messages. mFlintReceiverManager.open();
+ *
+ * @author jim
+ *
+ */
+public class MainActivity extends Activity implements Callback {
     private static final String TAG = "MainActivity";
 
     private static final String APPID = "~flintplayer";
 
+    private static final int PLAYER_MSG_LOAD = 1;
+    private static final int PLAYER_MSG_PLAY = 2;
+    private static final int PLAYER_MSG_PAUSE = 3;
+    private static final int PLAYER_MSG_SEEK = 4;
+    private static final int PLAYER_MSG_CHANGE_VOLUME = 5;
+    private static final int PLAYER_MSG_SEND_MESSAGE = 6;
+    private static final int PLAYER_MSG_STOP = 7;
+    private static final int PLAYER_MSG_FINISHED = 8;
+
     private FlintReceiverManager mFlintReceiverManager;
 
-    private FlintVideo mFlintVideo;
+    private MyFlintVideo mFlintVideo;
 
     private FlintMediaPlayer mFlintMediaPlayer;
+
+    private Button mPlayBtn;
+    private Button mPauseBtn;
+    private Button mStopBtn;
+
+    private MediaPlayer mMediaPlayer = null;
+    private SurfaceView mSurface = null;
+    private SurfaceHolder mSurfaceHolder = null;
+
+    private double mCurrentTime = 0;
+
+    private boolean mMuted = false;
+
+    private double mVolume = 1; // default max?
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+
+            switch (msg.what) {
+            case PLAYER_MSG_LOAD:
+                doLoad();
+                break;
+
+            case PLAYER_MSG_PLAY:
+                doPlay();
+                break;
+
+            case PLAYER_MSG_PAUSE:
+                doPause();
+                break;
+
+            case PLAYER_MSG_SEEK:
+                doSeek(msg.arg1);
+                break;
+
+            case PLAYER_MSG_CHANGE_VOLUME:
+                doChangeVolume();
+                break;
+
+            case PLAYER_MSG_SEND_MESSAGE:
+                doSendMessage();
+                break;
+
+            case PLAYER_MSG_STOP:
+                doStop();
+                break;
+            case PLAYER_MSG_FINISHED:
+                doFinished();
+                break;
+            }
+        }
+    };
+
+    private class MyFlintVideo extends FlintVideo {
+
+        @Override
+        public void load() {
+            Log.e(TAG, "load!");
+
+            mHandler.sendEmptyMessage(PLAYER_MSG_LOAD);
+        }
+
+        @Override
+        public void pause() {
+            Log.e(TAG, "pause!");
+
+            mHandler.sendEmptyMessage(PLAYER_MSG_PAUSE);
+        }
+
+        @Override
+        public void play() {
+            Log.e(TAG, "play!");
+
+            mHandler.sendEmptyMessage(PLAYER_MSG_PLAY);
+        }
+
+        @Override
+        public void stop(JSONObject custData) {
+            Log.e(TAG, "stop!");
+
+            mHandler.sendEmptyMessage(PLAYER_MSG_STOP);
+        }
+
+        @Override
+        public void seek(double time) {
+            mCurrentTime = time;
+
+            Message msg = mHandler.obtainMessage();
+            msg.what = PLAYER_MSG_SEEK;
+            msg.arg1 = (int) time;
+            mHandler.sendMessage(msg);
+        }
+
+        @Override
+        public void setCurrentTime(double time) {
+            // TODO Auto-generated method stub
+
+            mCurrentTime = time;
+        }
+
+        @Override
+        public double getCurrentTime() {
+            // use real concrete media object to getCurrent position!
+            try {
+                if (mMediaPlayer != null) {
+                    return mMediaPlayer.getCurrentPosition();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return mCurrentTime;
+        }
+
+        @Override
+        public void setVolume(double volume) {
+            Message msg = mHandler.obtainMessage();
+            msg.what = PLAYER_MSG_CHANGE_VOLUME;
+            mHandler.sendMessage(msg);
+        }
+
+        @Override
+        public double getVolume() {
+            // TODO Auto-generated method stub
+
+            return mVolume;
+        }
+
+        @Override
+        public boolean isMuted() {
+            // TODO Auto-generated method stub
+
+            return mMuted;
+        }
+    };
 
     BroadcastReceiver mFlintReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -37,6 +228,47 @@ public class MainActivity extends Activity {
 
         IntentFilter filter = new IntentFilter("fling.action.stop_receiver");
         registerReceiver(mFlintReceiver, filter);
+
+        mPlayBtn = (Button) findViewById(R.id.play);
+        mPlayBtn.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                mHandler.sendEmptyMessage(PLAYER_MSG_PLAY);
+            }
+
+        });
+
+        mPauseBtn = (Button) findViewById(R.id.pause);
+        mPauseBtn.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                mHandler.sendEmptyMessage(PLAYER_MSG_PAUSE);
+            }
+
+        });
+
+        mStopBtn = (Button) findViewById(R.id.stop);
+        mStopBtn.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                mHandler.sendEmptyMessage(PLAYER_MSG_STOP);
+            }
+        });
+
+        mSurface = (SurfaceView) findViewById(R.id.surface);
+
+        mSurfaceHolder = mSurface.getHolder();
+
+        mSurfaceHolder.addCallback(this);
 
         init();
     }
@@ -65,24 +297,366 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
 
-        mFlintMediaPlayer.stop(null);
+        try {
+            mFlintMediaPlayer.stop(null);
 
-        mFlintReceiverManager.close();
+            mFlintReceiverManager.close();
 
-        if (mFlintReceiver != null) {
-            unregisterReceiver(mFlintReceiver);
+            if (mFlintReceiver != null) {
+                unregisterReceiver(mFlintReceiver);
+            }
+
+            if (mMediaPlayer != null) {
+                mMediaPlayer.stop();
+
+                mMediaPlayer.release();
+
+                mMediaPlayer = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     /**
-     * init objects
+     * init Flint objects
      */
     private void init() {
         mFlintReceiverManager = new FlintReceiverManager(APPID);
-        mFlintVideo = new FlintVideo();
+
+        mFlintVideo = new MyFlintVideo();
+
         mFlintMediaPlayer = new FlintMediaPlayer(mFlintReceiverManager,
                 mFlintVideo);
 
         mFlintReceiverManager.open();
+    }
+
+    /**
+     * Process LOAD media player event
+     */
+    private void doLoad() {
+
+        try {
+            if (mMediaPlayer != null) {
+
+                // in order to continue play, first we stop and rest media
+                // player!
+                try {
+                    if (mMediaPlayer.isPlaying()) {
+                        mMediaPlayer.stop();
+                        mMediaPlayer.reset();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                mMediaPlayer.setDataSource(mFlintVideo.getUrl());
+                mMediaPlayer.prepare();
+                mMediaPlayer.start();
+            } else {
+                Log.e(TAG, "mMediaPlayer is null?!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Process PLAY media player event.
+     */
+    private void doPlay() {
+        try {
+            if (mMediaPlayer != null) {
+                mMediaPlayer.start();
+            }
+
+            mFlintVideo.notifyEvents(FlintVideo.PLAY, "");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Process PAUSE media player event.
+     */
+    private void doPause() {
+        try {
+            if (mMediaPlayer != null) {
+                mMediaPlayer.pause();
+            }
+
+            mFlintVideo.notifyEvents(FlintVideo.PAUSE, "");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Process SEEK media player event.
+     */
+    private void doSeek(int msec) {
+        Log.e(TAG, "seek![" + msec);
+
+        try {
+            if (mMediaPlayer != null) {
+                mMediaPlayer.seekTo(msec);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Process CHANGE VOLUME media player event.
+     */
+    private void doChangeVolume() {
+        try {
+            if (mMediaPlayer != null) {
+                double volume = mFlintVideo.getVolume();
+                Log.e(TAG, "doChangeVolume:volume:" + volume);
+                mMediaPlayer.setVolume((float) volume, (float) volume);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Process SEND CUSTOM MESSAGE event.
+     */
+    private void doSendMessage() {
+
+    }
+
+    /**
+     * Process STOP media player event.
+     */
+    private void doStop() {
+        try {
+            if (mMediaPlayer != null) {
+                mMediaPlayer.stop();
+            }
+
+            mFlintVideo.notifyEvents(FlintVideo.ENDED, "");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Do something when video is finished!
+     */
+    private void doFinished() {
+        Toast.makeText(getApplicationContext(), "The video is finished!",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width,
+            int height) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        // TODO Auto-generated method stub
+
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer
+                .setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
+
+                    @Override
+                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                        // TODO Auto-generated method stub
+
+                        Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
+                    }
+
+                });
+
+        mMediaPlayer.setOnErrorListener(new OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "OnErrorListener:what[" + what + "]extra[" + extra
+                        + "]");
+
+                mFlintVideo.notifyEvents(FlintVideo.ERROR, "");
+
+                return false;
+            }
+
+        });
+
+        mMediaPlayer.setOnInfoListener(new OnInfoListener() {
+
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "OnInfoListener:what[" + what + "]extra[" + extra
+                        + "]");
+
+                mFlintVideo.setCurrentTime(mp.getCurrentPosition());
+
+                switch (what) {
+                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                    mFlintVideo.notifyEvents(FlintVideo.WAITING, "");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
+                    break;
+                case MediaPlayer.MEDIA_INFO_UNKNOWN:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
+                    break;
+                case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
+                    break;
+                case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
+                    break;
+                }
+
+                return false;
+            }
+
+        });
+
+        mMediaPlayer.setOnPreparedListener(new OnPreparedListener() {
+
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "onPrepared![" + mp.getDuration() + "]");
+
+                // changeVideoSizes();
+
+                // set Flint
+                mFlintVideo.setDuration(mp.getDuration());
+
+                mFlintVideo.setPlaybackRate(1); // TODO
+
+                mFlintVideo.setCurrentTime(mp.getCurrentPosition());
+
+                mFlintVideo.notifyEvents(FlintVideo.LOADEDMETADATA, ""); // READY
+                                                                         // TO
+                                                                         // PLAY
+            }
+
+        });
+
+        mMediaPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
+
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "onSeekComplete!");
+
+                mFlintVideo.notifyEvents(FlintVideo.SEEKED, "");
+            }
+
+        });
+
+        mMediaPlayer.setOnCompletionListener(new OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "onCompletion!");
+
+                mFlintVideo.setCurrentTime(mFlintVideo.getDuration());
+
+                mFlintVideo.notifyEvents(FlintVideo.ENDED, "");
+
+                mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
+            }
+        });
+
+        mMediaPlayer
+                .setOnVideoSizeChangedListener(new OnVideoSizeChangedListener() {
+
+                    @Override
+                    public void onVideoSizeChanged(MediaPlayer mp, int width,
+                            int height) {
+
+                        changeVideoSizes(width, height);
+
+                        // mVideoWidth = mp.getVideoWidth();
+                        // mVideoHeight = mp.getVideoHeight();
+                        // mVideoAspectRatio = getVideoAspectRatio();
+                        // if (mVideoWidth != 0 && mVideoHeight != 0)
+                        // setVideoLayout(mVideoLayout, mAspectRatio);
+                    }
+                });
+
+        mMediaPlayer.setDisplay(mSurfaceHolder);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * Set current video surface's width and height.
+     *
+     * @param width
+     * @param height
+     */
+    private void changeVideoSizes(int width, int height) {
+        if (width == 0 || height == 0) {
+            Log.e(TAG, "invalid video width(" + width + ") or height(" + height
+                    + ")");
+            return;
+        }
+
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+
+        int displayWith = dm.widthPixels;
+        int displayHeight = dm.heightPixels;
+
+        if (width != 0 && height != 0) {
+            // LayoutParams params = mSurface.getLayoutParams();
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                    displayWith, displayHeight);
+
+            if (width * displayHeight > displayWith * height) {
+                params.height = displayWith * height / width;
+            } else if (width * displayHeight < displayWith * height) {
+                params.width = displayHeight * width / height;
+            } else {
+                params.width = displayWith;
+                params.height = displayHeight;
+            }
+
+            Log.e(TAG, "displayWith: " + displayWith + " displayHeight:"
+                    + displayHeight + " params.width:" + params.width
+                    + " params.height:" + params.height);
+            int marginLeft = (displayWith - params.width) / 2;
+            int marginTop = (displayHeight - params.height) / 2;
+
+            Log.e(TAG, "marginLeft:" + marginLeft + " marginTop:" + marginTop);
+
+            params.setMargins(marginLeft, marginTop, marginLeft, marginTop);
+            mSurface.setLayoutParams(params);
+
+            mSurfaceHolder.setFixedSize(params.width, params.height);
+        }
     }
 }
