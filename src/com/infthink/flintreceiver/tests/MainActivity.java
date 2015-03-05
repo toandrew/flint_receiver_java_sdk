@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -88,7 +89,7 @@ public class MainActivity extends Activity implements Callback {
 
     private boolean mMuted = false;
 
-    private double mVolume = 1; // default max?
+    private double mVolume = 0; // please note the category: "0.0" ~ "1.0"
 
     /**
      * Use the followings to process all standard media events: LOAD, PLAY,
@@ -202,6 +203,8 @@ public class MainActivity extends Activity implements Callback {
 
         @Override
         public void setVolume(double volume) {
+            mVolume = volume; // save this volume.
+
             Message msg = mHandler.obtainMessage();
             msg.what = PLAYER_MSG_CHANGE_VOLUME;
             mHandler.sendMessage(msg);
@@ -282,6 +285,11 @@ public class MainActivity extends Activity implements Callback {
         mSurfaceHolder = mSurfaceView.getHolder();
 
         mSurfaceHolder.addCallback(this);
+
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        mVolume = (float) am.getStreamVolume(AudioManager.STREAM_MUSIC)
+                / (float) maxVolume;
 
         init();
     }
@@ -364,7 +372,7 @@ public class MainActivity extends Activity implements Callback {
                 Log.e(TAG, "OnErrorListener:what[" + what + "]extra[" + extra
                         + "]");
 
-                mFlintVideo.notifyEvents(FlintVideo.ERROR, "");
+                mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
 
                 return false;
             }
@@ -384,25 +392,32 @@ public class MainActivity extends Activity implements Callback {
 
                 switch (what) {
                 case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                            "Media is PLAYING");
                     break;
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                    mFlintVideo.notifyEvents(FlintVideo.WAITING, "WAITING");
+                    mFlintVideo.notifyEvents(FlintVideo.WAITING,
+                            "Media is WAITING");
                     break;
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                            "Media is PLAYING");
                     break;
                 case MediaPlayer.MEDIA_INFO_UNKNOWN:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                            "Media is PLAYING");
                     break;
                 case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                            "Media is PLAYING");
                     break;
                 case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                            "Media is PLAYING");
                     break;
                 case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                            "Media is PLAYING");
                     break;
                 }
 
@@ -426,9 +441,10 @@ public class MainActivity extends Activity implements Callback {
 
                 mFlintVideo.setCurrentTime(mp.getCurrentPosition());
 
-                mFlintVideo.notifyEvents(FlintVideo.LOADEDMETADATA, ""); // READY
-                                                                         // TO
-                                                                         // PLAY
+                mFlintVideo.notifyEvents(FlintVideo.LOADEDMETADATA,
+                        "Media is LOADEDMETADATA"); // READY
+                // TO
+                // PLAY
             }
 
         });
@@ -441,7 +457,8 @@ public class MainActivity extends Activity implements Callback {
 
                 Log.e(TAG, "onSeekComplete!");
 
-                mFlintVideo.notifyEvents(FlintVideo.SEEKED, "");
+                // notify sender app this SEEKED event.
+                mFlintVideo.notifyEvents(FlintVideo.SEEKED, "Media SEEKED");
             }
 
         });
@@ -456,7 +473,8 @@ public class MainActivity extends Activity implements Callback {
 
                 mFlintVideo.setCurrentTime(mFlintVideo.getDuration());
 
-                mFlintVideo.notifyEvents(FlintVideo.ENDED, "");
+                // notify sender app this media ended event.
+                mFlintVideo.notifyEvents(FlintVideo.ENDED, "Media ENDED");
 
                 mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
             }
@@ -515,10 +533,8 @@ public class MainActivity extends Activity implements Callback {
                 // in order to continue play, first we stop and rest media
                 // player!
                 try {
-                    if (mMediaPlayer.isPlaying()) {
-                        mMediaPlayer.stop();
-                        mMediaPlayer.reset();
-                    }
+                    mMediaPlayer.stop();
+                    mMediaPlayer.reset();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -543,7 +559,7 @@ public class MainActivity extends Activity implements Callback {
                 mMediaPlayer.start();
             }
 
-            mFlintVideo.notifyEvents(FlintVideo.PLAY, "");
+            mFlintVideo.notifyEvents(FlintVideo.PLAY, "PLAY Media");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -558,7 +574,7 @@ public class MainActivity extends Activity implements Callback {
                 mMediaPlayer.pause();
             }
 
-            mFlintVideo.notifyEvents(FlintVideo.PAUSE, "");
+            mFlintVideo.notifyEvents(FlintVideo.PAUSE, "PAUSE Media");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -585,13 +601,27 @@ public class MainActivity extends Activity implements Callback {
     private void doChangeVolume() {
         try {
             if (mMediaPlayer != null) {
-                double volume = mFlintVideo.getVolume();
+                double volume = mFlintVideo.getVolume(); // 0.0 ~ 1.0
                 Log.e(TAG, "doChangeVolume:volume:" + volume);
-                mMediaPlayer.setVolume((float) volume, (float) volume);
+
+                // change system volume?
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                int maxVolume = am
+                        .getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                Log.e(TAG, "maxVolume:" + maxVolume);
+                am.setStreamVolume(AudioManager.STREAM_MUSIC,
+                        (int) (maxVolume * volume),
+                        AudioManager.FLAG_PLAY_SOUND
+                                | AudioManager.FLAG_SHOW_UI);
+
+                // notify volume changed event to sender apps!!!
+                mFlintVideo.notifyEvents(FlintVideo.VOLUMECHANGE,
+                        "Media VOLUMECHANGED");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     /**
@@ -610,7 +640,8 @@ public class MainActivity extends Activity implements Callback {
                 mMediaPlayer.stop();
             }
 
-            mFlintVideo.notifyEvents(FlintVideo.ENDED, "");
+            // notify that media player is stopped!
+            mFlintVideo.notifyEvents(FlintVideo.ENDED, "Media ENDED");
 
         } catch (Exception e) {
             e.printStackTrace();
