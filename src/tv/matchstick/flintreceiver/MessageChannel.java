@@ -8,8 +8,6 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.util.Log;
-
 /**
  * Interact messages with Fling daemon and Sender Apps
  * 
@@ -18,6 +16,8 @@ import android.util.Log;
  */
 public abstract class MessageChannel implements FlintWebSocketListener {
     private static final String TAG = "MessageChannel";
+
+    private FlintLogger log = new FlintLogger(TAG);
 
     public static final String NAMESPACE = "namespace";
 
@@ -73,9 +73,9 @@ public abstract class MessageChannel implements FlintWebSocketListener {
         if (url != null) {
             mUrl = url;
         }
-        
-        Log.e(TAG, "open: url[" + mUrl + "]");
-        
+
+        log.e("open: url[" + mUrl + "]");
+
         mWebSocket = new FlintWebSocket(this, URI.create(mUrl));
         mWebSocket.connect();
 
@@ -106,7 +106,7 @@ public abstract class MessageChannel implements FlintWebSocketListener {
      */
     public void send(final String data) {
         if (!mIsOpened) {
-            Log.e(TAG, "MessageChannel is not opened, cannot sent:" + data);
+            log.e("MessageChannel is not opened, cannot sent:" + data);
             return;
         }
 
@@ -130,7 +130,7 @@ public abstract class MessageChannel implements FlintWebSocketListener {
 
             timer.schedule(task, 50);
         } else {
-            Log.e(TAG, "MessageChannel send failed, channel readyState is:"
+            log.e("MessageChannel send failed, channel readyState is:"
                     + mWebSocket.getReadyState());
         }
     }
@@ -213,6 +213,6 @@ public abstract class MessageChannel implements FlintWebSocketListener {
      * Notify all MessageBus obj about message received event
      */
     public void onMessage(String data) {
-        Log.d(TAG, "onMessage:" + data);
+        log.d("onMessage:" + data);
     }
 }

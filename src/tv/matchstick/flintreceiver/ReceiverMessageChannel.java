@@ -7,8 +7,6 @@ import java.util.Map.Entry;
 
 import org.json.JSONObject;
 
-import android.util.Log;
-
 /**
  * Receiver's message channel.
  * 
@@ -17,6 +15,8 @@ import android.util.Log;
  */
 public class ReceiverMessageChannel extends MessageChannel {
     private static final String TAG = "ReceiverMessageChannel";
+
+    private FlintLogger log = new FlintLogger(TAG);
 
     private HashMap<String, String> mSenders = new HashMap<String, String>();
 
@@ -81,7 +81,7 @@ public class ReceiverMessageChannel extends MessageChannel {
         try {
             JSONObject d = new JSONObject(data);
 
-            //JSONObject d = message.getJSONObject(MSG_DATA);
+            // JSONObject d = message.getJSONObject(MSG_DATA);
 
             String type = d.getString(MSG_DATA_TYPE);
             if (type.equals(MSG_DATA_SENDERCONNECTED)) {
@@ -103,7 +103,7 @@ public class ReceiverMessageChannel extends MessageChannel {
                 String ex = d.getString(MSG_DATA_MESSAGE);
                 onErrorHappened(ex);
             } else {
-                Log.e(TAG, "ReceiverMessageChannel unknow data.type:" + type);
+                log.e("ReceiverMessageChannel unknow data.type:" + type);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -4,8 +4,6 @@ import java.util.HashMap;
 
 import org.json.JSONObject;
 
-import android.util.Log;
-
 /**
  * This is used to transfer messages between sender and receiver Apps.
  * 
@@ -15,11 +13,13 @@ import android.util.Log;
 public abstract class ReceiverMessageBus extends MessageBus {
     private static final String TAG = "ReceiverMessageBus";
 
+    private FlintLogger log = new FlintLogger(TAG);
+
     private static final String PAYLOAD = "payload";
     private static final String NAMESPACE = "namespace";
     private static final String DATA = "data";
     private static final String SENDERID = "senderId";
-    
+
     HashMap<String, String> mSenders = new HashMap<String, String>();
 
     protected ReceiverMessageBus(String namespace) {
@@ -38,10 +38,10 @@ public abstract class ReceiverMessageBus extends MessageBus {
         // TODO Auto-generated method stub
 
         if (data == null) {
-            Log.e(TAG, "data is null!ignore send!");
+            log.e("data is null!ignore send!");
             return;
         }
-        
+
         try {
             JSONObject message = new JSONObject();
             message.put(NAMESPACE, mNamespace);
@@ -56,8 +56,8 @@ public abstract class ReceiverMessageBus extends MessageBus {
             }
             obj.put(DATA, message.toString());
 
-            Log.e(TAG, "send[" + obj.toString() + "]");
-            
+            log.e("send[" + obj.toString() + "]");
+
             mMessageChannel.send(obj.toString());
 
         } catch (Exception e) {
@@ -75,14 +75,14 @@ public abstract class ReceiverMessageBus extends MessageBus {
     @Override
     public void onSenderConnected(String senderId) {
         // TODO Auto-generated method stub
-        
+
         mSenders.put(senderId, senderId);
     }
 
     @Override
     public void onSenderDisconnected(String senderId) {
         // TODO Auto-generated method stub
-        
+
         mSenders.remove(senderId);
     }
 

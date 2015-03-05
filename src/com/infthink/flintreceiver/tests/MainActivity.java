@@ -36,7 +36,7 @@ import android.widget.Toast;
 
 /**
  * This is test application which will use Flint Java Receiver SDK.
- * 
+ *
  * How to use the Java Receiver SDK?
  *
  * 1. Make sure "FlintReceiverManager" object is created.
@@ -515,6 +515,10 @@ public class MainActivity extends Activity implements Callback {
      * Init all Flint related objects
      */
     private void init() {
+
+        // whether enable receiver log.
+        FlintReceiverManager.setLogEnabled(true);
+
         mFlintReceiverManager = new FlintReceiverManager(APPID);
 
         mFlintVideo = new MyFlintVideo();

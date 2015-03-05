@@ -7,9 +7,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import tv.matchstick.flintreceiver.FlintConstants;
+import tv.matchstick.flintreceiver.FlintLogger;
 import tv.matchstick.flintreceiver.FlintReceiverManager;
 import tv.matchstick.flintreceiver.ReceiverMessageBus;
-import android.util.Log;
 
 /**
  * Flint default media player which can be used to communicate media events with
@@ -20,6 +20,8 @@ import android.util.Log;
  */
 public class FlintMediaPlayer {
     private static final String TAG = "FlintMediaPlayer";
+
+    private FlintLogger log = new FlintLogger(TAG);
 
     public static final String PLAYER_STATE_IDLE = "IDLE";
     public static final String PLAYER_STATE_PLAYING = "PLAYING";
@@ -131,14 +133,14 @@ public class FlintMediaPlayer {
             public void onSenderConnected(String senderId) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "MediaPlayer received sender connected:" + senderId);
+                log.e("MediaPlayer received sender connected:" + senderId);
             }
 
             @Override
             public void onSenderDisconnected(String senderId) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "MediaPlayer received sender disconnected:"
+                log.e("MediaPlayer received sender disconnected:"
                         + senderId);
             }
 
@@ -146,13 +148,13 @@ public class FlintMediaPlayer {
             public void onPayloadMessage(String payload, String senderId) {
                 // TODO Auto-generated method stub
 
-                Log.d(TAG, "Received payload[" + payload + "]senderId["
+                log.d("Received payload[" + payload + "]senderId["
                         + senderId + "]");
 
                 // process messages on user part.
                 boolean consumed = onMediaMessages(payload);
                 if (consumed) {
-                    Log.w(TAG, "Consumed this message![" + payload + "]");
+                    log.w("Consumed this message![" + payload + "]");
                     return;
                 }
 
@@ -229,7 +231,7 @@ public class FlintMediaPlayer {
                     if (type.endsWith(DATA_TYPE_GET_STATUS)) {
                         mRequestIdGetStatus = mRequestId;
 
-                        Log.e(TAG, "Received GET_STATUS Request!");
+                        log.e("Received GET_STATUS Request!");
                         mMessageReport.syncPlayerState("");
 
                         return;
@@ -428,7 +430,7 @@ public class FlintMediaPlayer {
             String subtitle, JSONObject mediaMetadata) {
         mMediaMetadata = mediaMetadata;
 
-        Log.e(TAG, "mMediaMetadata: " + mMediaMetadata.toString());
+        log.e("mMediaMetadata: " + mMediaMetadata.toString());
 
         mTitle = title;
 
@@ -656,7 +658,7 @@ public class FlintMediaPlayer {
             }
 
             try {
-                Log.e(TAG, "messageData:" + messageData + "]["
+                log.e("messageData:" + messageData + "]["
                         + (new JSONObject(messageData)).toString());
 
                 mMessageBus.send(messageData, BROADCAST_SENDER_ID);
@@ -752,7 +754,7 @@ public class FlintMediaPlayer {
      * @return whether this message is consumed.
      */
     public boolean onMediaMessages(String payload) {
-        Log.e(TAG, "onMediaMessages:" + payload);
+        log.e("onMediaMessages:" + payload);
 
         return false;
     }

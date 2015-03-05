@@ -7,8 +7,6 @@ import java.util.Map.Entry;
 
 import org.json.JSONObject;
 
-import android.util.Log;
-
 /**
  * Flint Receiver Manager
  * 
@@ -20,6 +18,11 @@ import android.util.Log;
  */
 public class FlintReceiverManager {
     private static final String TAG = "FlintReceiverManager";
+
+    private FlintLogger log = new FlintLogger(TAG);
+
+    // log flag
+    private static boolean mLogEnabled = true;
 
     private static final String IPC_CHANNEL_NAME = "ipc";
 
@@ -76,7 +79,7 @@ public class FlintReceiverManager {
      */
     public boolean open() {
         if (isOpened()) {
-            Log.e(TAG, "FlintReceiverManager is already opened!");
+            log.e("FlintReceiverManager is already opened!");
             return true;
         }
 
@@ -86,13 +89,13 @@ public class FlintReceiverManager {
             public void onOpen(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "ipcChannel opened!!!");
+                log.e("ipcChannel opened!!!");
 
                 // send register message
                 JSONObject register = new JSONObject();
                 try {
                     register.put(IPC_MESSAGE_TYPE, IPC_MESSAGE_DATA_REGISTER);
-                    
+
                     ipcSend(register);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -103,21 +106,21 @@ public class FlintReceiverManager {
             public void onClose(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "ipcChannel closed!!!");
+                log.e("ipcChannel closed!!!");
             }
 
             @Override
             public void onError(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "ipcChannel error!!!");
+                log.e("ipcChannel error!!!");
             }
 
             @Override
             public void onMessage(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "ipcChannel received message: [" + data + "]");
+                log.e("ipcChannel received message: [" + data + "]");
 
                 try {
                     JSONObject json = new JSONObject(data);
@@ -181,7 +184,7 @@ public class FlintReceiverManager {
             return true;
         }
 
-        Log.e(TAG, "FlintReceiverManager is not started, cannot close!!!");
+        log.e("FlintReceiverManager is not started, cannot close!!!");
 
         return false;
     }
@@ -199,8 +202,7 @@ public class FlintReceiverManager {
         String ns = namespace;
 
         if (isOpened()) {
-            Log.e(TAG,
-                    "cannot create MessageBus: FlintReceiverManager is already opened!");
+            log.e("cannot create MessageBus: FlintReceiverManager is already opened!");
             return null;
         }
 
@@ -225,10 +227,27 @@ public class FlintReceiverManager {
      * @param data
      */
     public void setAdditionalData(String data) {
-        Log.d(TAG, "set custom additionaldata: " + data);
+        log.e("set custom additionaldata: " + data);
+
         mCustAdditionalData = data;
 
         sendAdditionalData();
+    }
+
+    /**
+     * Enables or disables verbose logging for this Fling session.
+     */
+    public static void setLogEnabled(boolean enable) {
+        mLogEnabled = enable;
+    }
+
+    /**
+     * Get whether log flag
+     * 
+     * @return
+     */
+    public static boolean isLogEnabled() {
+        return mLogEnabled;
     }
 
     /**
@@ -253,7 +272,8 @@ public class FlintReceiverManager {
             json.put(IPC_MESSAGE_APPID, mAppId);
 
             if (mIpcChannel != null) {
-                Log.e(TAG, "ipcSend:[" + json.toString() + "]");
+                log.e("ipcSend:[" + json.toString() + "]");
+
                 mIpcChannel.send(json.toString());
             }
         } catch (Exception e) {
@@ -271,7 +291,7 @@ public class FlintReceiverManager {
             String type = data.getString(IPC_MESSAGE_TYPE);
 
             if (type.equals(IPC_MESSAGE_STARTHEARTBEAT)) {
-                Log.d(TAG, "receiver ready to start heartbeat!!!");
+                log.e("receiver ready to start heartbeat!!!");
             } else if (type.equals(IPC_MESSAGE_REGISTEROK)) {
 
                 mFlintServerIp = data
@@ -279,8 +299,8 @@ public class FlintReceiverManager {
                         .getJSONArray(IPC_MESSAGE_DATA_SERVICE_INFO_IP)
                         .getString(0);
 
-                Log.d(TAG, "receiver register done!!![" + mFlintServerIp + "]");
-                
+                log.e("receiver register done!!![" + mFlintServerIp + "]");
+
                 sendAdditionalData();
             } else if (type.equals(IPC_MESSAGE_HEARTBEAT)) {
                 String t = data.getString(IPC_MESSAGE_DATA_HEARTBEAT);
@@ -305,18 +325,16 @@ public class FlintReceiverManager {
                         e.printStackTrace();
                     }
                 } else {
-                    Log.e(TAG, "unknow heartbeat message:" + t);
+                    log.e("unknow heartbeat message:" + t);
                 }
             } else if (type.equals(IPC_MESSAGE_SENDERCONNECTED)) {
-                Log.d(TAG,
-                        "IPC senderconnected: "
-                                + data.getString(IPC_MESSAGE_DATA_TOKEN));
+                log.e("IPC senderconnected: "
+                        + data.getString(IPC_MESSAGE_DATA_TOKEN));
             } else if (type.equals(IPC_MESSAGE_SENDERDISCONNECTED)) {
-                Log.d(TAG,
-                        "IPC senderdisconnected: "
-                                + data.getString(IPC_MESSAGE_DATA_TOKEN));
+                log.e("IPC senderdisconnected: "
+                        + data.getString(IPC_MESSAGE_DATA_TOKEN));
             } else {
-                Log.e(TAG, "IPC unknow type:" + type);
+                log.e("IPC unknow type:" + type);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -339,7 +357,7 @@ public class FlintReceiverManager {
                 e.printStackTrace();
             }
         } else {
-            Log.e(TAG, "no additionaldata need to send");
+            log.e("no additionaldata need to send");
         }
     }
 
@@ -384,21 +402,21 @@ public class FlintReceiverManager {
             public void onOpen(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "Receiver default message channel open!!! " + data);
+                log.e("Receiver default message channel open!!! " + data);
             }
 
             @Override
             public void onClose(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "Receiver default message channel close!!! " + data);
+                log.e("Receiver default message channel close!!! " + data);
             }
 
             @Override
             public void onError(String data) {
                 // TODO Auto-generated method stub
 
-                Log.e(TAG, "Receiver default message channel error!!! " + data);
+                log.e("Receiver default message channel error!!! " + data);
             }
         };
 
