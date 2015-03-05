@@ -13,7 +13,6 @@ import org.json.JSONObject;
  *
  */
 public abstract class FlintVideo {
-    private static final String TAG = "FlintVideo";
 
     // video events
     public static final String EMPTIED = "emptied";
@@ -235,7 +234,8 @@ public abstract class FlintVideo {
     }
 
     /**
-     * Notify something is happened.
+     * Notify Sender apps that something(media is loaded, playing, paused, etc)
+     * is happened, those events is very important for Sender Apps.
      * 
      * @param type
      * @param data

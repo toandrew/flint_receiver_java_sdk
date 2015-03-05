@@ -7,6 +7,12 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import android.util.Log;
 
+/**
+ * Flint WebSocket
+ * 
+ * @author jim
+ *
+ */
 public class FlintWebSocket extends WebSocketClient {
     private static final String TAG = "FlintWebSocket";
 

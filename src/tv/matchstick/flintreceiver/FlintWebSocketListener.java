@@ -16,6 +16,12 @@
 
 package tv.matchstick.flintreceiver;
 
+/**
+ * Flint WebSocket Listener
+ * 
+ * @author jim
+ *
+ */
 public interface FlintWebSocketListener {
     public abstract void onOpen(String data);
 

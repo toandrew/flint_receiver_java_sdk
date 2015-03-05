@@ -1,7 +1,9 @@
-package tv.matchstick.flintreceiver;
+package com.infthink.flintreceiver.tests;
 
 import org.json.JSONObject;
 
+import tv.matchstick.flintreceiver.FlintReceiverManager;
+import tv.matchstick.flintreceiver.R;
 import tv.matchstick.flintreceiver.media.FlintMediaPlayer;
 import tv.matchstick.flintreceiver.media.FlintVideo;
 import android.app.Activity;
@@ -27,7 +29,6 @@ import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -35,7 +36,7 @@ import android.widget.Toast;
 /**
  * This is test application which will use Flint Java Receiver SDK.
  * 
- * How to use thes Java Receiver SDK?
+ * How to use the Java Receiver SDK?
  *
  * 1. Make sure "FlintReceiverManager" object is created. mFlintReceiverManager
  * = new FlintReceiverManager(APPID); // APPID("~flintplayer") IS OUR DEFAULT
@@ -89,6 +90,10 @@ public class MainActivity extends Activity implements Callback {
 
     private double mVolume = 1; // default max?
 
+    /**
+     * Use the followings to process all standard media events: LOAD, PLAY,
+     * PAUSE,etc
+     */
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -122,6 +127,7 @@ public class MainActivity extends Activity implements Callback {
             case PLAYER_MSG_STOP:
                 doStop();
                 break;
+
             case PLAYER_MSG_FINISHED:
                 doFinished();
                 break;
@@ -129,6 +135,9 @@ public class MainActivity extends Activity implements Callback {
         }
     };
 
+    /**
+     * Concrete Flint Video, which will receive all media events.
+     */
     private class MyFlintVideo extends FlintVideo {
 
         @Override
@@ -179,6 +188,7 @@ public class MainActivity extends Activity implements Callback {
         @Override
         public double getCurrentTime() {
             // use real concrete media object to getCurrent position!
+
             try {
                 if (mMediaPlayer != null) {
                     return mMediaPlayer.getCurrentPosition();
@@ -212,6 +222,9 @@ public class MainActivity extends Activity implements Callback {
         }
     };
 
+    /**
+     * Process "STOP_RECEIVER" command from Flingd
+     */
     BroadcastReceiver mFlintReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
@@ -318,8 +331,159 @@ public class MainActivity extends Activity implements Callback {
         }
     }
 
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width,
+            int height) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        // TODO Auto-generated method stub
+
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer
+                .setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
+
+                    @Override
+                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                        // TODO Auto-generated method stub
+
+                        Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
+                    }
+
+                });
+
+        mMediaPlayer.setOnErrorListener(new OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "OnErrorListener:what[" + what + "]extra[" + extra
+                        + "]");
+
+                mFlintVideo.notifyEvents(FlintVideo.ERROR, "");
+
+                return false;
+            }
+
+        });
+
+        mMediaPlayer.setOnInfoListener(new OnInfoListener() {
+
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "OnInfoListener:what[" + what + "]extra[" + extra
+                        + "]");
+
+                mFlintVideo.setCurrentTime(mp.getCurrentPosition());
+
+                switch (what) {
+                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                    mFlintVideo.notifyEvents(FlintVideo.WAITING, "WAITING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_UNKNOWN:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
+                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "PLAYING");
+                    break;
+                }
+
+                return false;
+            }
+
+        });
+
+        mMediaPlayer.setOnPreparedListener(new OnPreparedListener() {
+
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "onPrepared![" + mp.getDuration() + "]");
+
+                // set Flint related
+                mFlintVideo.setDuration(mp.getDuration());
+
+                mFlintVideo.setPlaybackRate(1); // TODO
+
+                mFlintVideo.setCurrentTime(mp.getCurrentPosition());
+
+                mFlintVideo.notifyEvents(FlintVideo.LOADEDMETADATA, ""); // READY
+                                                                         // TO
+                                                                         // PLAY
+            }
+
+        });
+
+        mMediaPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
+
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "onSeekComplete!");
+
+                mFlintVideo.notifyEvents(FlintVideo.SEEKED, "");
+            }
+
+        });
+
+        mMediaPlayer.setOnCompletionListener(new OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+
+                Log.e(TAG, "onCompletion!");
+
+                mFlintVideo.setCurrentTime(mFlintVideo.getDuration());
+
+                mFlintVideo.notifyEvents(FlintVideo.ENDED, "");
+
+                mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
+            }
+        });
+
+        mMediaPlayer
+                .setOnVideoSizeChangedListener(new OnVideoSizeChangedListener() {
+
+                    @Override
+                    public void onVideoSizeChanged(MediaPlayer mp, int width,
+                            int height) {
+
+                        changeVideoSizes(width, height);
+                    }
+                });
+
+        mMediaPlayer.setDisplay(mSurfaceHolder);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        // TODO Auto-generated method stub
+
+    }
+
     /**
-     * init Flint objects
+     * Init all Flint related objects
      */
     private void init() {
         mFlintReceiverManager = new FlintReceiverManager(APPID);
@@ -327,7 +491,15 @@ public class MainActivity extends Activity implements Callback {
         mFlintVideo = new MyFlintVideo();
 
         mFlintMediaPlayer = new FlintMediaPlayer(mFlintReceiverManager,
-                mFlintVideo);
+                mFlintVideo) {
+
+            @Override
+            public boolean onMediaMessages(String payload) {
+                // TODO, here you can process all media messages.
+
+                return false;
+            }
+        };
 
         mFlintReceiverManager.open();
     }
@@ -423,7 +595,7 @@ public class MainActivity extends Activity implements Callback {
     }
 
     /**
-     * Process SEND CUSTOM MESSAGE event.
+     * Send CUSTOM MESSAGE events to Sender Apps.
      */
     private void doSendMessage() {
 
@@ -451,165 +623,6 @@ public class MainActivity extends Activity implements Callback {
     private void doFinished() {
         Toast.makeText(getApplicationContext(), "The video is finished!",
                 Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,
-            int height) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        // TODO Auto-generated method stub
-
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer
-                .setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
-
-                    @Override
-                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                        // TODO Auto-generated method stub
-
-                        Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
-                    }
-
-                });
-
-        mMediaPlayer.setOnErrorListener(new OnErrorListener() {
-
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                // TODO Auto-generated method stub
-
-                Log.e(TAG, "OnErrorListener:what[" + what + "]extra[" + extra
-                        + "]");
-
-                mFlintVideo.notifyEvents(FlintVideo.ERROR, "");
-
-                return false;
-            }
-
-        });
-
-        mMediaPlayer.setOnInfoListener(new OnInfoListener() {
-
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                // TODO Auto-generated method stub
-
-                Log.e(TAG, "OnInfoListener:what[" + what + "]extra[" + extra
-                        + "]");
-
-                mFlintVideo.setCurrentTime(mp.getCurrentPosition());
-
-                switch (what) {
-                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
-                    break;
-                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                    mFlintVideo.notifyEvents(FlintVideo.WAITING, "");
-                    break;
-                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
-                    break;
-                case MediaPlayer.MEDIA_INFO_UNKNOWN:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
-                    break;
-                case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
-                    break;
-                case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
-                    break;
-                case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING, "");
-                    break;
-                }
-
-                return false;
-            }
-
-        });
-
-        mMediaPlayer.setOnPreparedListener(new OnPreparedListener() {
-
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                // TODO Auto-generated method stub
-
-                Log.e(TAG, "onPrepared![" + mp.getDuration() + "]");
-
-                // changeVideoSizes();
-
-                // set Flint
-                mFlintVideo.setDuration(mp.getDuration());
-
-                mFlintVideo.setPlaybackRate(1); // TODO
-
-                mFlintVideo.setCurrentTime(mp.getCurrentPosition());
-
-                mFlintVideo.notifyEvents(FlintVideo.LOADEDMETADATA, ""); // READY
-                                                                         // TO
-                                                                         // PLAY
-            }
-
-        });
-
-        mMediaPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
-
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                // TODO Auto-generated method stub
-
-                Log.e(TAG, "onSeekComplete!");
-
-                mFlintVideo.notifyEvents(FlintVideo.SEEKED, "");
-            }
-
-        });
-
-        mMediaPlayer.setOnCompletionListener(new OnCompletionListener() {
-
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                // TODO Auto-generated method stub
-
-                Log.e(TAG, "onCompletion!");
-
-                mFlintVideo.setCurrentTime(mFlintVideo.getDuration());
-
-                mFlintVideo.notifyEvents(FlintVideo.ENDED, "");
-
-                mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
-            }
-        });
-
-        mMediaPlayer
-                .setOnVideoSizeChangedListener(new OnVideoSizeChangedListener() {
-
-                    @Override
-                    public void onVideoSizeChanged(MediaPlayer mp, int width,
-                            int height) {
-
-                        changeVideoSizes(width, height);
-
-                        // mVideoWidth = mp.getVideoWidth();
-                        // mVideoHeight = mp.getVideoHeight();
-                        // mVideoAspectRatio = getVideoAspectRatio();
-                        // if (mVideoWidth != 0 && mVideoHeight != 0)
-                        // setVideoLayout(mVideoLayout, mAspectRatio);
-                    }
-                });
-
-        mMediaPlayer.setDisplay(mSurfaceHolder);
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        // TODO Auto-generated method stub
-
     }
 
     /**

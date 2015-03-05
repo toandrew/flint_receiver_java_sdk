@@ -41,6 +41,7 @@ public abstract class ReceiverMessageBus extends MessageBus {
             Log.e(TAG, "data is null!ignore send!");
             return;
         }
+        
         try {
             JSONObject message = new JSONObject();
             message.put(NAMESPACE, mNamespace);

@@ -9,12 +9,8 @@ import java.util.HashMap;
  *
  */
 public abstract class MessageBus implements FlintWebSocketListener {
-    private static final String TAG = "MessageBus";
-
-    public static final String TYPE_NORMAL = "normal";
-    public static final String TYPE_MEDIA = "media";
-    
     MessageChannel mMessageChannel;
+
     String mNamespace;
 
     public MessageBus(String namespace) {
@@ -24,7 +20,7 @@ public abstract class MessageBus implements FlintWebSocketListener {
     }
 
     /**
-     * Set related message channel.
+     * Set the relationship with the message channel.
      * 
      * @param channel
      */
@@ -32,18 +28,21 @@ public abstract class MessageBus implements FlintWebSocketListener {
         mMessageChannel = channel;
         mMessageChannel.registerMessageBus(this, mNamespace);
     }
-    
-    public abstract void init();
-    
-    public abstract void send(String data, String senderId);
 
-    public abstract HashMap<String, String> getSenders();
-
-    public void close() {
+    /**
+     * Do some clean work
+     */
+    public void unSetMessageChannel() {
         if (mMessageChannel != null) {
             mMessageChannel.unRegisterMessageBus(mNamespace);
         }
     }
+
+    abstract public void init();
+
+    abstract public void send(String data, String senderId);
+
+    abstract public HashMap<String, String> getSenders();
 
     /**
      * Called when Sender App connected.
@@ -77,24 +76,24 @@ public abstract class MessageBus implements FlintWebSocketListener {
     @Override
     public void onOpen(String data) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void onClose(String data) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void onError(String data) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void onMessage(String data) {
         // TODO Auto-generated method stub
-        
+
     }
 }

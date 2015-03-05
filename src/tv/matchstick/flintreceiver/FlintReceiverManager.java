@@ -165,7 +165,7 @@ public class FlintReceiverManager {
                         Map.Entry<String, MessageBus> entry = (Map.Entry<String, MessageBus>) iter
                                 .next();
                         MessageBus bus = (MessageBus) entry.getValue();
-                        bus.close();
+                        bus.unSetMessageChannel();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
