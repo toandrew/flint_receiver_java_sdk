@@ -81,7 +81,7 @@ public class MainActivity extends Activity implements Callback {
     private Button mStopBtn;
 
     private MediaPlayer mMediaPlayer = null;
-    private SurfaceView mSurface = null;
+    private SurfaceView mSurfaceView = null;
     private SurfaceHolder mSurfaceHolder = null;
 
     private double mCurrentTime = 0;
@@ -277,9 +277,9 @@ public class MainActivity extends Activity implements Callback {
             }
         });
 
-        mSurface = (SurfaceView) findViewById(R.id.surface);
+        mSurfaceView = (SurfaceView) findViewById(R.id.surface);
 
-        mSurfaceHolder = mSurface.getHolder();
+        mSurfaceHolder = mSurfaceView.getHolder();
 
         mSurfaceHolder.addCallback(this);
 
@@ -667,7 +667,7 @@ public class MainActivity extends Activity implements Callback {
             Log.e(TAG, "marginLeft:" + marginLeft + " marginTop:" + marginTop);
 
             params.setMargins(marginLeft, marginTop, marginLeft, marginTop);
-            mSurface.setLayoutParams(params);
+            mSurfaceView.setLayoutParams(params);
 
             mSurfaceHolder.setFixedSize(params.width, params.height);
         }

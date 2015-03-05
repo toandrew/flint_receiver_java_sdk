@@ -12,7 +12,7 @@ import android.util.Log;
 /**
  * Flint Receiver Manager
  * 
- * This is used by java receiver Apps to interact with Flint daemon and Sender
+ * This is used by java Receiver Apps to interact with Flint daemon and Sender
  * Apps
  * 
  * @author jim
@@ -59,7 +59,7 @@ public class FlintReceiverManager {
 
     private String mFlintServerIp = "127.0.0.1";
 
-    private HashMap<String, MessageBus> mMessageBusList = new HashMap<String, MessageBus>();
+    private HashMap<String, MessageBus> mMessageBusMap = new HashMap<String, MessageBus>();
 
     private String mCustAdditionalData;
 
@@ -157,9 +157,9 @@ public class FlintReceiverManager {
                 mMessageChannel.close();
             }
 
-            if (mMessageBusList != null) {
+            if (mMessageBusMap != null) {
                 try {
-                    Iterator<Entry<String, MessageBus>> iter = mMessageBusList
+                    Iterator<Entry<String, MessageBus>> iter = mMessageBusMap
                             .entrySet().iterator();
                     while (iter.hasNext()) {
                         Map.Entry<String, MessageBus> entry = (Map.Entry<String, MessageBus>) iter
@@ -171,7 +171,7 @@ public class FlintReceiverManager {
                     e.printStackTrace();
                 }
 
-                mMessageBusList = null;
+                mMessageBusMap = null;
             }
 
             if (mIpcChannel != null) {
@@ -214,7 +214,7 @@ public class FlintReceiverManager {
 
         bus.setMessageChannel(mMessageChannel);
 
-        mMessageBusList.put(ns, bus);
+        mMessageBusMap.put(ns, bus);
 
         return bus;
     }
