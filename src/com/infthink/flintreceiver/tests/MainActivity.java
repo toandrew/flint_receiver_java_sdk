@@ -39,20 +39,30 @@ import android.widget.Toast;
  * 
  * How to use the Java Receiver SDK?
  *
- * 1. Make sure "FlintReceiverManager" object is created. mFlintReceiverManager
- * = new FlintReceiverManager(APPID); // APPID("~flintplayer") IS OUR DEFAULT
- * MEDIA PLAYER APPLICATION'S ID.
+ * 1. Make sure "FlintReceiverManager" object is created.
+ * <p>
+ * mFlintReceiverManager = new FlintReceiverManager(APPID); //
+ * APPID("~flintplayer") IS OUR DEFAULT MEDIA PLAYER APPLICATION'S ID.
+ * <p>
  *
  * 2. Create concrete "FlingVideo" object and implements all abstract functions.
+ * <p>
  * mFlintVideo = new MyFlintVideo(); // MyFlintVideo is extended from the
  * abstract class FlintVideo.
+ * <p>
  *
  * 3. Create FlintMediaPlayer object which will handle all Flint media player
- * related messages. mFlintMediaPlayer = new
- * FlintMediaPlayer(mFlintReceiverManager, mFlintVideo);
+ * related messages.
+ * <p>
+ * mFlintMediaPlayer = new FlintMediaPlayer(mFlintReceiverManager, mFlintVideo);
+ * <p>
  *
  * 4. Call "open" of FlintReceiverManager to receive and process all Flint media
- * related messages. mFlintReceiverManager.open();
+ * related messages.
+ * <p>
+ * mFlintReceiverManager.open(); // or mFlintReceiverManager.close() to release
+ * it.
+ * <p>
  *
  * @author jim
  *
@@ -291,6 +301,7 @@ public class MainActivity extends Activity implements Callback {
         mVolume = (float) am.getStreamVolume(AudioManager.STREAM_MUSIC)
                 / (float) maxVolume;
 
+        // init flint related objects
         init();
     }
 
@@ -515,6 +526,7 @@ public class MainActivity extends Activity implements Callback {
             public boolean onMediaMessages(String payload) {
                 // TODO, here you can process all media messages.
 
+                Log.e(TAG, "onMediaMessages: " + payload);
                 return false;
             }
         };
@@ -657,7 +669,7 @@ public class MainActivity extends Activity implements Callback {
     }
 
     /**
-     * Set current video surface's width and height.
+     * Change current video surface's width and height.
      *
      * @param width
      * @param height
