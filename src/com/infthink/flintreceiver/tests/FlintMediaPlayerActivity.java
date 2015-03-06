@@ -31,7 +31,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -437,16 +436,6 @@ public class FlintMediaPlayerActivity extends Activity {
 
         mLinearLayout.addView(mLogoView, lp);
 
-        Display display = getWindowManager().getDefaultDisplay();
-        int width = display.getWidth();
-        int height = display.getHeight();
-        int size;
-        if (width > height) {
-            size = height / 3 * 2;
-        } else {
-            size = width / 3 * 2;
-        }
-
         mFrameLayout.addView(mLinearLayout, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         mFrameLayout.setVisibility(View.VISIBLE);
@@ -544,6 +533,7 @@ public class FlintMediaPlayerActivity extends Activity {
             }
         };
 
+        // used to receive cust message from sender app.
         mCustMessageReceiverMessageBus = new ReceiverMessageBus(
                 CUST_MESSAGE_NAMESPACE) {
 
