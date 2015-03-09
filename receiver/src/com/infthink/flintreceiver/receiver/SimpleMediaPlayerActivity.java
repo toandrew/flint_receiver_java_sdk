@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.infthink.flintreceiver.tests;
+package com.infthink.flintreceiver.receiver;
 
 import org.json.JSONObject;
 
@@ -83,8 +83,8 @@ import android.widget.Toast;
  * @author jim
  *
  */
-public class SimpleFlintMediaPlayerActivity extends Activity implements Callback {
-    private static final String TAG = "SimpleFlintMediaPlayerActivity";
+public class SimpleMediaPlayerActivity extends Activity implements Callback {
+    private static final String TAG = "SimpleMediaPlayerActivity";
 
     private static final String APPID = "~flintplayer";
 

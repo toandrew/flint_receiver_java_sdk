@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.infthink.flintreceiver.tests"
+    package="com.infthink.flintreceiver.receiver"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -18,7 +18,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.infthink.flintreceiver.tests.SimpleFlintMediaPlayerActivity"
+            android:name="com.infthink.flintreceiver.receiver.SimpleMediaPlayerActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name"
             android:screenOrientation="landscape"
@@ -27,7 +27,7 @@
         </activity>
         
         <activity
-            android:name="com.infthink.flintreceiver.tests.FlintMediaPlayerActivity"
+            android:name="com.infthink.flintreceiver.receiver.MediaPlayerActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >

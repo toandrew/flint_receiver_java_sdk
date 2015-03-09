@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.infthink.flintreceiver.tests.widget;
+package com.infthink.flintreceiver.receiver.widget;
 
 import io.vov.vitamio.utils.Log;
 import io.vov.vitamio.utils.StringUtils;
@@ -44,7 +44,7 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
-public class FlintMediaController extends MediaController {
+public class MyMediaController extends MediaController {
     private static final int sDefaultTimeout = 5000;
     private static final int FADE_OUT = 1;
     private static final int SHOW_PROGRESS = 2;
@@ -143,14 +143,14 @@ public class FlintMediaController extends MediaController {
         }
     };
 
-    public FlintMediaController(Context context, AttributeSet attrs) {
+    public MyMediaController(Context context, AttributeSet attrs) {
         super(context, attrs);
         mRoot = this;
         mFromXml = true;
         initController(context);
     }
 
-    public FlintMediaController(Context context) {
+    public MyMediaController(Context context) {
         super(context);
         if (!mFromXml && initController(context))
             initFloatingWindow();

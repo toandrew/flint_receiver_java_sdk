@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.infthink.flintreceiver.tests;
+package com.infthink.flintreceiver.receiver;
 
 import io.vov.vitamio.LibsChecker;
 import io.vov.vitamio.MediaPlayer;
@@ -55,11 +55,11 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.infthink.flintreceiver.tests.widget.FlintMediaController;
-import com.infthink.flintreceiver.tests.widget.FlintMediaController.OnChangeMediaStateListener;
+import com.infthink.flintreceiver.receiver.widget.MyMediaController;
+import com.infthink.flintreceiver.receiver.widget.MyMediaController.OnChangeMediaStateListener;
 
 /**
- * This is test application which will use Flint Java Receiver SDK ad VITAMIO SDK.
+ * This is test application which will use Flint Java Receiver SDK ad Vitamio SDK.
  *
  * How to use the Java Receiver SDK?
  *
@@ -91,14 +91,14 @@ import com.infthink.flintreceiver.tests.widget.FlintMediaController.OnChangeMedi
  * @author jim
  *
  */
-public class FlintMediaPlayerActivity extends Activity {
+public class MediaPlayerActivity extends Activity {
 
-    private static final String TAG = FlintMediaPlayerActivity.class
+    private static final String TAG = MediaPlayerActivity.class
             .getSimpleName();
 
     private static final String APPID = "~flintplayer";
 
-    private static final String CUST_MESSAGE_NAMESPACE = "urn:flint:com.infthink.flintreceiver.tests";
+    private static final String CUST_MESSAGE_NAMESPACE = "urn:flint:com.infthink.flintreceiver.receiver";
 
     // custom message which will be send back to Sender Apps.
     private JSONObject mCustMessage;
@@ -107,7 +107,7 @@ public class FlintMediaPlayerActivity extends Activity {
 
     private VideoView mVideoView;
 
-    private FlintMediaController mFlintMediaController;
+    private MyMediaController mFlintMediaController;
 
     private LinearLayout mLinearLayout;
 
@@ -417,7 +417,7 @@ public class FlintMediaPlayerActivity extends Activity {
             }
         });
 
-        mFlintMediaController = new FlintMediaController(this);
+        mFlintMediaController = new MyMediaController(this);
         mFlintMediaController
                 .setOnChangeMediaStateListener(new OnChangeMediaStateListener() {
 
@@ -628,6 +628,9 @@ public class FlintMediaPlayerActivity extends Activity {
             } else {
                 Log.e(TAG, "mMediaPlayer is null?!");
             }
+            
+            // hide media controller?
+            mFlintMediaController.hide();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -643,6 +646,9 @@ public class FlintMediaPlayerActivity extends Activity {
             }
 
             mFlintVideo.notifyEvents(FlintVideo.PLAY, "PLAY Media");
+            
+            // hide media controller?
+            mFlintMediaController.hide();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -658,6 +664,9 @@ public class FlintMediaPlayerActivity extends Activity {
             }
 
             mFlintVideo.notifyEvents(FlintVideo.PAUSE, "PAUSE Media");
+            
+            // show media controller
+            mFlintMediaController.show();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -29,7 +29,7 @@ import android.util.Log;
 public abstract class FlintMsgChannel implements Flint.MessageReceivedCallback {
     private static final String TAG = FlintMsgChannel.class.getSimpleName();
 
-    private static final String FLINGMESSAGE_NAMESPACE = "urn:flint:com.infthink.flintreceiver.tests";
+    private static final String FLINGMESSAGE_NAMESPACE = "urn:flint:com.infthink.flintreceiver.receiver";
 
     // Commands
     private static final String KEY_COMMAND = "command";
