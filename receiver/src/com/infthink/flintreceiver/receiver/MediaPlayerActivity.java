@@ -577,7 +577,7 @@ public class MediaPlayerActivity extends Activity {
                 mFlintVideo) {
 
             @Override
-            public boolean onMediaMessages(String payload) {
+            public boolean onMediaMessage(String payload) {
                 // TODO, here you can process all media messages.
 
                 Log.e(TAG, "onMediaMessages: " + payload);
@@ -591,17 +591,17 @@ public class MediaPlayerActivity extends Activity {
                 CUST_MESSAGE_NAMESPACE) {
 
             @Override
-            public void onPayloadMessage(String payload, String senderId) {
+            public void onPayloadMessage(final String payload, final String senderId) {
                 // TODO Auto-generated method stub
 
-                // process CUST message received from sender apps.
+                // process CUSTOM messages received from sender apps.
                 mHandler.post(new Runnable() {
 
                     @Override
                     public void run() {
                         // TODO Auto-generated method stub
                         Toast.makeText(getApplicationContext(),
-                                "Message cust messages:", Toast.LENGTH_SHORT)
+                                "Got user messages![" + payload + "]", Toast.LENGTH_SHORT)
                                 .show();
                     }
 
@@ -649,6 +649,11 @@ public class MediaPlayerActivity extends Activity {
             
             // hide media controller?
             mFlintMediaController.hide();
+            
+             //Here show how to send custom message to sender apps.
+             mCustMessage = new JSONObject();
+             mCustMessage.put("hello", "PLAY Media!");
+             mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -747,6 +752,8 @@ public class MediaPlayerActivity extends Activity {
             // notify that media player is stopped!
             mFlintVideo.notifyEvents(FlintVideo.ENDED, "Media ENDED");
 
+            // STOP received? treated it as FINISHED!
+            mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
         } catch (Exception e) {
             e.printStackTrace();
         }

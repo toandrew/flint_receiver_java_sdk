@@ -23,11 +23,11 @@ package tv.matchstick.flintreceiver;
  *
  */
 interface FlintWebSocketListener {
-    public abstract void onOpen(String data);
+    public abstract void onOpen(final String data);
 
-    public abstract void onClose(String data);
+    public abstract void onClose(final String data);
 
-    public abstract void onError(String data);
+    public abstract void onError(final String data);
 
-    public abstract void onMessage(String data);
+    public abstract void onMessage(final String data);
 }

@@ -56,7 +56,7 @@ public class ReceiverMessageChannel extends MessageChannel {
     }
 
     @Override
-    public void send(String data) {
+    public void send(final String data) {
         super.send(data);
     }
 
@@ -68,28 +68,28 @@ public class ReceiverMessageChannel extends MessageChannel {
     }
 
     @Override
-    public void onOpen(String data) {
+    public void onOpen(final String data) {
         // TODO Auto-generated method stub
 
         super.onOpen(data);
     }
 
     @Override
-    public void onClose(String data) {
+    public void onClose(final String data) {
         // TODO Auto-generated method stub
 
         super.onClose(data);
     }
 
     @Override
-    public void onError(String data) {
+    public void onError(final String data) {
         // TODO Auto-generated method stub
 
         super.onError(data);
     }
 
     @Override
-    public void onMessage(String data) {
+    public void onMessage(final String data) {
         // TODO Auto-generated method stub
 
         super.onMessage(data);
@@ -131,7 +131,7 @@ public class ReceiverMessageChannel extends MessageChannel {
      * 
      * @param senderId
      */
-    public void onSenderConnected(String senderId) {
+    public void onSenderConnected(final String senderId) {
         try {
             Iterator<Entry<String, MessageBus>> iter = mMessageBusMap
                     .entrySet().iterator();
@@ -151,7 +151,7 @@ public class ReceiverMessageChannel extends MessageChannel {
      * 
      * @param senderId
      */
-    public void onSenderDisConnected(String senderId) {
+    public void onSenderDisConnected(final String senderId) {
         try {
             Iterator<Entry<String, MessageBus>> iter = mMessageBusMap
                     .entrySet().iterator();
@@ -172,7 +172,7 @@ public class ReceiverMessageChannel extends MessageChannel {
      * @param data
      * @param senderId
      */
-    public void onMessageReceived(String data, String senderId) {
+    public void onMessageReceived(final String data, final String senderId) {
         try {
             JSONObject json = new JSONObject(data);
             String namespace = json.getString(NAMESPACE);
@@ -184,7 +184,6 @@ public class ReceiverMessageChannel extends MessageChannel {
                         .next();
 
                 String ns = (String) entry.getKey();
-
                 if (ns.equals(namespace)) {
                     MessageBus bus = (MessageBus) entry.getValue();
                     bus.onMessageReceived(data, senderId);
@@ -200,7 +199,7 @@ public class ReceiverMessageChannel extends MessageChannel {
      * 
      * @param ex
      */
-    public void onErrorHappened(String ex) {
+    public void onErrorHappened(final String ex) {
         try {
             Iterator<Entry<String, MessageBus>> iter = mMessageBusMap
                     .entrySet().iterator();

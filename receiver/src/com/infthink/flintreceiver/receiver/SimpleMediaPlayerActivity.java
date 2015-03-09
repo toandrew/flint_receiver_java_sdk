@@ -543,7 +543,7 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 mFlintVideo) {
 
             @Override
-            public boolean onMediaMessages(String payload) {
+            public boolean onMediaMessage(final String payload) {
                 // TODO, here you can process all media messages.
 
                 Log.e(TAG, "onMediaMessages: " + payload);

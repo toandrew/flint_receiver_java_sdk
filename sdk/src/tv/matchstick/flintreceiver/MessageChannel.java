@@ -85,7 +85,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
      * @param url
      * @return
      */
-    public boolean open(String url) {
+    public boolean open(final String url) {
         if (url != null) {
             mUrl = url;
         }
@@ -166,7 +166,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
      * @param messageBus
      * @param namespace
      */
-    public void registerMessageBus(MessageBus messageBus, String namespace) {
+    public void registerMessageBus(MessageBus messageBus, final String namespace) {
         if (messageBus != null && namespace != null) {
             mMessageBusMap.put(namespace, messageBus);
         }
@@ -177,7 +177,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
      * 
      * @param namespace
      */
-    public void unRegisterMessageBus(String namespace) {
+    public void unRegisterMessageBus(final String namespace) {
         if (namespace != null) {
             mMessageBusMap.remove(namespace);
         }
@@ -186,7 +186,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
     /**
      * Notify all MessageBus obj about open events
      */
-    public void onOpen(String data) {
+    public void onOpen(final String data) {
         Iterator<Entry<String, MessageBus>> iter = mMessageBusMap.entrySet()
                 .iterator();
         while (iter.hasNext()) {
@@ -200,7 +200,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
     /**
      * Notify all MessageBus obj about close event
      */
-    public void onClose(String data) {
+    public void onClose(final String data) {
         Iterator<Entry<String, MessageBus>> iter = mMessageBusMap.entrySet()
                 .iterator();
         while (iter.hasNext()) {
@@ -214,7 +214,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
     /**
      * Notify all MessageBus obj about error event
      */
-    public void onError(String data) {
+    public void onError(final String data) {
         Iterator<Entry<String, MessageBus>> iter = mMessageBusMap.entrySet()
                 .iterator();
         while (iter.hasNext()) {
@@ -228,7 +228,7 @@ abstract class MessageChannel implements FlintWebSocketListener {
     /**
      * Notify all MessageBus obj about message received event
      */
-    public void onMessage(String data) {
+    public void onMessage(final String data) {
         log.d("onMessage:" + data);
     }
 }

@@ -169,7 +169,7 @@ public class FlintMediaPlayer {
                         + senderId + "]");
 
                 // process messages on user part.
-                boolean consumed = onMediaMessages(payload);
+                boolean consumed = onMediaMessage(payload);
                 if (consumed) {
                     log.w("Consumed this message![" + payload + "]");
                     return;
@@ -770,7 +770,7 @@ public class FlintMediaPlayer {
      * @param payload
      * @return whether this message is consumed.
      */
-    public boolean onMediaMessages(String payload) {
+    public boolean onMediaMessage(final String payload) {
         log.e("onMediaMessages:" + payload);
 
         return false;

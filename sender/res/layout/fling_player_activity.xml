@@ -104,7 +104,9 @@
                 android:id="@+id/send_receive_controls_row_1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal" >
+                android:orientation="horizontal"
+                android:focusable="true" 
+				android:focusableInTouchMode="true"  >
 
                 <Button
                     android:id="@+id/send_cust_msg"
@@ -121,7 +123,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="fill"
                     android:layout_weight="1"
-                    android:enabled="false"
+                    android:enabled="true"
                     android:text="Hello world!" />
             </LinearLayout>
 
@@ -138,7 +140,7 @@
                     android:layout_gravity="fill"
                     android:layout_weight="1"
                     android:enabled="false"
-                    android:text="Here's received message!" />
+                    android:text="Here will show your received message!" />
             </LinearLayout>
         </LinearLayout>
 

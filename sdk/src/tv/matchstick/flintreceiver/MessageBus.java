@@ -56,7 +56,7 @@ abstract class MessageBus implements FlintWebSocketListener {
 
     abstract public void init();
 
-    abstract public void send(String data, String senderId);
+    abstract public void send(final String data, final String senderId);
 
     abstract public HashMap<String, String> getSenders();
 
@@ -65,14 +65,14 @@ abstract class MessageBus implements FlintWebSocketListener {
      * 
      * @param senderId
      */
-    public abstract void onSenderConnected(String senderId);
+    public abstract void onSenderConnected(final String senderId);
 
     /**
      * Called when Sender App disconnected.
      * 
      * @param senderId
      */
-    public abstract void onSenderDisconnected(String senderId);
+    public abstract void onSenderDisconnected(final String senderId);
 
     /**
      * Called when raw message received
@@ -80,35 +80,35 @@ abstract class MessageBus implements FlintWebSocketListener {
      * @param data
      * @param senderId
      */
-    public abstract void onMessageReceived(String data, String senderId);
+    public abstract void onMessageReceived(final String data, final String senderId);
 
     /**
      * Called when error happened.
      * 
      * @param ex
      */
-    public abstract void onErrorHappened(String ex);
+    public abstract void onErrorHappened(final String ex);
 
     @Override
-    public void onOpen(String data) {
+    public void onOpen(final String data) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void onClose(String data) {
+    public void onClose(final String data) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void onError(String data) {
+    public void onError(final String data) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void onMessage(String data) {
+    public void onMessage(final String data) {
         // TODO Auto-generated method stub
 
     }

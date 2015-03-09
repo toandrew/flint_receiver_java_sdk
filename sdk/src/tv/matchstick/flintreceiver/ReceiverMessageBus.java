@@ -36,6 +36,8 @@ public abstract class ReceiverMessageBus extends MessageBus {
     private static final String DATA = "data";
     private static final String SENDERID = "senderId";
 
+    private static final String BROADCAST_SENDER_ID = "*:*";
+
     HashMap<String, String> mSenders = new HashMap<String, String>();
 
     protected ReceiverMessageBus(String namespace) {
@@ -50,7 +52,7 @@ public abstract class ReceiverMessageBus extends MessageBus {
     }
 
     @Override
-    public void send(String data, String senderId) {
+    public void send(final String data, final String senderId) {
         // TODO Auto-generated method stub
 
         if (data == null) {
@@ -66,7 +68,7 @@ public abstract class ReceiverMessageBus extends MessageBus {
             JSONObject obj = new JSONObject();
 
             if (senderId == null) {
-                obj.put(SENDERID, "*.*"); // all
+                obj.put(SENDERID, BROADCAST_SENDER_ID); // all
             } else {
                 obj.put(SENDERID, senderId);
             }
@@ -89,21 +91,21 @@ public abstract class ReceiverMessageBus extends MessageBus {
     }
 
     @Override
-    public void onSenderConnected(String senderId) {
+    public void onSenderConnected(final String senderId) {
         // TODO Auto-generated method stub
 
         mSenders.put(senderId, senderId);
     }
 
     @Override
-    public void onSenderDisconnected(String senderId) {
+    public void onSenderDisconnected(final String senderId) {
         // TODO Auto-generated method stub
 
         mSenders.remove(senderId);
     }
 
     @Override
-    public void onMessageReceived(String data, String senderId) {
+    public void onMessageReceived(final String data, final String senderId) {
         // TODO Auto-generated method stub
 
         try {
@@ -117,7 +119,7 @@ public abstract class ReceiverMessageBus extends MessageBus {
     }
 
     @Override
-    public void onErrorHappened(String ex) {
+    public void onErrorHappened(final String ex) {
         // TODO Auto-generated method stub
 
     }
@@ -128,5 +130,6 @@ public abstract class ReceiverMessageBus extends MessageBus {
      * @param payload
      * @param senderId
      */
-    public abstract void onPayloadMessage(String payload, String senderId);
+    public abstract void onPayloadMessage(final String payload,
+            final String senderId);
 }
