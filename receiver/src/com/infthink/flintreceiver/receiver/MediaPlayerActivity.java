@@ -303,7 +303,7 @@ public class MediaPlayerActivity extends Activity {
         mVideoView = new VideoView(this);
         
         // Hardware Decoder? default
-        mVideoView.setHardwareDecoder(false);
+        mVideoView.setHardwareDecoder(true);
 
         mVideoView
                 .setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
