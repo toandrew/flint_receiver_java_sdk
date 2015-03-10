@@ -120,6 +120,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     private SurfaceView mSurfaceView = null;
     private SurfaceHolder mSurfaceHolder = null;
 
+    private FrameLayout mContiner;
+
     private double mCurrentTime = 0;
 
     private boolean mMuted = false;
@@ -127,6 +129,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     private double mVolume = 0; // please note the category: "0.0" ~ "1.0"
 
     private ImageView mLogo;
+
+    private String mCurrentVideoUrl = null;
 
     /**
      * Use the followings to process all standard media events: LOAD, PLAY,
@@ -332,6 +336,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
 
         mSurfaceHolder.addCallback(this);
 
+        mContiner = (FrameLayout) findViewById(R.id.container);
+        mContiner.setBackgroundColor(Color.BLACK);
+
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         mVolume = (float) am.getStreamVolume(AudioManager.STREAM_MUSIC)
@@ -425,6 +432,7 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 Log.e(TAG, "OnErrorListener:what[" + what + "]extra[" + extra
                         + "]");
 
+                // notify ERROR to sender app when error happened?
                 mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
 
                 return false;
@@ -488,7 +496,7 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 // TODO Auto-generated method stub
 
                 Log.e(TAG, "onPrepared![" + mp.getDuration() + "]");
-                
+
                 // hide logo
                 mLogo.setVisibility(View.GONE);
 
@@ -626,14 +634,19 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
         try {
             if (mMediaPlayer != null) {
 
-                // in order to continue play, first we stop and rest media
-                // player!
-                try {
-                    mMediaPlayer.stop();
-                    mMediaPlayer.reset();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                // in order to support continue play, first we stop and rest the media
+                // player which should only be called when some media really had been played.
+                if (mCurrentVideoUrl != null) {
+                    Log.e(TAG, "reset media player!");
+                    try {
+                        mMediaPlayer.stop();
+                        mMediaPlayer.reset();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
+
+                mCurrentVideoUrl = mFlintVideo.getUrl();
 
                 mMediaPlayer.setDataSource(mFlintVideo.getUrl());
                 mMediaPlayer.prepare();
@@ -773,9 +786,10 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
         Toast.makeText(getApplicationContext(), "The video is finished!",
                 Toast.LENGTH_SHORT).show();
 
-        // show logo
+        // in order to show logo
         mLogo.setVisibility(View.VISIBLE);
         mSurfaceView.setBackgroundColor(Color.BLACK);
+        mContiner.setBackgroundColor(Color.BLACK);
     }
 
     /**
@@ -823,6 +837,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             mSurfaceView.setLayoutParams(params);
 
             mSurfaceHolder.setFixedSize(params.width, params.height);
+
+            // clear background color.
+            mSurfaceView.setBackgroundColor(Color.TRANSPARENT);
         }
     }
 }

@@ -271,7 +271,7 @@ public class FlintMediaPlayer {
                             customData = messageData
                                     .getJSONObject(DATA_CUSTOMDATA);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            //e.printStackTrace();
                         }
 
                         stop(customData);
