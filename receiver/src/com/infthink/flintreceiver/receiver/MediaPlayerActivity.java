@@ -645,6 +645,11 @@ public class MediaPlayerActivity extends Activity {
                                         "Use Software Decoder!!!",
                                         Toast.LENGTH_SHORT).show();
                             }
+                            
+                            if (mFlintVideo.getUrl() != null) {
+                                Log.e(TAG, "HARDWARE_DECODER[" + mIsHardwareDecoder + "]Reload video url:" + mFlintVideo.getUrl());
+                                doLoad();
+                            }
 
                             // Here show how to send custom message to sender
                             // apps.

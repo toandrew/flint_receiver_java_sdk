@@ -605,7 +605,7 @@ public class VideoPlayerActivity extends FragmentActivity implements
         }
 
         mSendCustMessageButton.setEnabled(hasMediaConnection);
-        mHardwareDecoderCheckbox.setEnabled(hasMediaConnection && !hasMedia);
+        mHardwareDecoderCheckbox.setEnabled(hasMediaConnection);
         
         mAutoplayCheckbox.setEnabled(hasDeviceConnection);
 
