@@ -3,18 +3,29 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-
-    <SurfaceView
-        android:id="@+id/surface"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center" >
-    </SurfaceView>
+	<FrameLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/container">
+	    <SurfaceView
+	        android:id="@+id/surface"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:layout_gravity="center" >
+	    </SurfaceView>
+ 		<ImageView
+	         android:id="@+id/logo"
+	         android:layout_width="match_parent"
+	         android:layout_height="match_parent"
+	         android:scaleType="center"
+	         android:src="@drawable/logo"
+	         android:layout_gravity="center"/>
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/surface"
+        android:layout_below="@id/container"
         android:orientation="horizontal"
         android:visibility="gone" >
 

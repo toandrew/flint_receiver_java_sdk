@@ -59,7 +59,8 @@ import com.infthink.flintreceiver.receiver.widget.MyMediaController;
 import com.infthink.flintreceiver.receiver.widget.MyMediaController.OnChangeMediaStateListener;
 
 /**
- * This is test application which will use Flint Java Receiver SDK ad Vitamio SDK.
+ * This is test application which will use Flint Java Receiver SDK ad Vitamio
+ * SDK.
  *
  * How to use the Java Receiver SDK?
  *
@@ -93,8 +94,7 @@ import com.infthink.flintreceiver.receiver.widget.MyMediaController.OnChangeMedi
  */
 public class MediaPlayerActivity extends Activity {
 
-    private static final String TAG = MediaPlayerActivity.class
-            .getSimpleName();
+    private static final String TAG = MediaPlayerActivity.class.getSimpleName();
 
     private static final String APPID = "~flintplayer";
 
@@ -251,6 +251,12 @@ public class MediaPlayerActivity extends Activity {
         public void setVolume(double volume) {
             mVolume = volume; // save this volume.
 
+            if (mVolume == 0) {
+                mMuted = true;
+            } else {
+                mMuted = false;
+            }
+
             Message msg = mHandler.obtainMessage();
             msg.what = PLAYER_MSG_CHANGE_VOLUME;
             mHandler.sendMessage(msg);
@@ -341,14 +347,22 @@ public class MediaPlayerActivity extends Activity {
                             "Media is WAITING");
                     break;
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    if (mVideoView != null) {
-                        mVideoView.start();
+                    if (mVideoView.isPlaying()) {
+                        Log.e(TAG, "MEDIA_INFO_BUFFERING_END: playing?!");
+                        mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                                "Media is PLAYING");
+                    } else {
+                        Log.e(TAG, "MEDIA_INFO_BUFFERING_END: waiting!!!?!");
+                        
+                        // this should be a workaround for the seek issue of VideoView in PAUSE state.
+                        mFlintVideo.notifyEvents(FlintVideo.SEEKED,
+                                "Media is WAITING?");
+                        mFlintVideo.notifyEvents(FlintVideo.PAUSE,
+                                "Media is PAUSED?");
                     }
-
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
                     break;
                 case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
+                    Log.e(TAG, "playing????!");
                     mFlintVideo.notifyEvents(FlintVideo.PLAYING,
                             "Media is PLAYING");
                     break;
@@ -379,7 +393,7 @@ public class MediaPlayerActivity extends Activity {
                 mFlintVideo.setCurrentTime(mp.getCurrentPosition());
 
                 mFlintVideo.notifyEvents(FlintVideo.LOADEDMETADATA,
-                        "Media is LOADEDMETADATA"); // READY
+                        "Media is LOADEDMETADATA"); // READY TO PLAY
                 // TO
                 // PLAY
             }
@@ -431,6 +445,9 @@ public class MediaPlayerActivity extends Activity {
                     public void startMedia() {
                         // TODO Auto-generated method stub
 
+                        // called when user clicked the "play" button in DONGLE
+                        // side.
+                        // in order to let sender app's know current status.
                         mFlintVideo.notifyEvents(FlintVideo.PLAYING,
                                 "Media is PLAYING");
                     }
@@ -439,6 +456,9 @@ public class MediaPlayerActivity extends Activity {
                     public void pauseMedia() {
                         // TODO Auto-generated method stub
 
+                        // called when user clicked the "pause" button in DONGLE
+                        // side.
+                        // in order to let sender app's know current status.
                         mFlintVideo.notifyEvents(FlintVideo.PAUSE,
                                 "PAUSE Media");
                     }
@@ -511,6 +531,12 @@ public class MediaPlayerActivity extends Activity {
         int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         mVolume = (float) am.getStreamVolume(AudioManager.STREAM_MUSIC)
                 / (float) maxVolume;
+
+        if (mVolume == 0) {
+            mMuted = true;
+        } else {
+            mMuted = false;
+        }
 
         // init flint related objects.
         init();
@@ -591,7 +617,8 @@ public class MediaPlayerActivity extends Activity {
                 CUST_MESSAGE_NAMESPACE) {
 
             @Override
-            public void onPayloadMessage(final String payload, final String senderId) {
+            public void onPayloadMessage(final String payload,
+                    final String senderId) {
                 // TODO Auto-generated method stub
 
                 // process CUSTOM messages received from sender apps.
@@ -601,8 +628,8 @@ public class MediaPlayerActivity extends Activity {
                     public void run() {
                         // TODO Auto-generated method stub
                         Toast.makeText(getApplicationContext(),
-                                "Got user messages![" + payload + "]", Toast.LENGTH_SHORT)
-                                .show();
+                                "Got user messages![" + payload + "]",
+                                Toast.LENGTH_SHORT).show();
                     }
 
                 });
@@ -624,11 +651,12 @@ public class MediaPlayerActivity extends Activity {
         try {
             if (mVideoView != null) {
                 mVideoView.setVideoPath(mFlintVideo.getUrl());
+                mVideoView.start();
                 Log.e(TAG, "setVideoPath![" + mFlintVideo.getUrl() + "]");
             } else {
                 Log.e(TAG, "mMediaPlayer is null?!");
             }
-            
+
             // hide media controller?
             mFlintMediaController.hide();
         } catch (Exception e) {
@@ -646,14 +674,14 @@ public class MediaPlayerActivity extends Activity {
             }
 
             mFlintVideo.notifyEvents(FlintVideo.PLAY, "PLAY Media");
-            
+
             // hide media controller?
             mFlintMediaController.hide();
-            
-             //Here show how to send custom message to sender apps.
-             mCustMessage = new JSONObject();
-             mCustMessage.put("hello", "PLAY Media!");
-             mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
+
+            // Here show how to send custom message to sender apps.
+            mCustMessage = new JSONObject();
+            mCustMessage.put("hello", "PLAY Media!");
+            mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -669,7 +697,7 @@ public class MediaPlayerActivity extends Activity {
             }
 
             mFlintVideo.notifyEvents(FlintVideo.PAUSE, "PAUSE Media");
-            
+
             // show media controller
             mFlintMediaController.show();
         } catch (Exception e) {
@@ -690,6 +718,9 @@ public class MediaPlayerActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        // notify seeking event to sender apps!!!
+        mFlintVideo.notifyEvents(FlintVideo.WAITING, "Media VOLUMECHANGED");
     }
 
     /**

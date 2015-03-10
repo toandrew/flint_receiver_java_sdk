@@ -286,7 +286,8 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="15dp"
             android:gravity="center_horizontal"
-            android:orientation="horizontal" >
+            android:orientation="horizontal" 
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -328,8 +329,7 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="15dp"
             android:gravity="center_horizontal"
-            android:orientation="horizontal" 
-            android:visibility="gone">
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"

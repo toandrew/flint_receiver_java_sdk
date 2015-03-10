@@ -74,7 +74,8 @@ public class FlintMediaPlayer {
 
     private static final String DATA_VOLUME = "volume";
     private static final String DATA_VOLUME_LEVEL = "level";
-
+    private static final String DATA_VOLUME_MUTED = "muted";
+    
     private static final String DATA_CURRENTTIME = "currentTime";
 
     private static final String DATA_CUSTOMDATA = "customData";
@@ -108,6 +109,8 @@ public class FlintMediaPlayer {
     private int mRequestIdGetStatus = 0;
 
     private int mRequestIdStop = 0;
+    
+    private double mPreVolumeLevel = 0.5;
 
     private static final String BROADCAST_SENDER_ID = "*:*";
 
@@ -224,9 +227,15 @@ public class FlintMediaPlayer {
 
                         JSONObject volumeObj = messageData
                                 .getJSONObject(DATA_VOLUME);
-                        double level = volumeObj.getDouble(DATA_VOLUME_LEVEL);
-
-                        changeVolume(level);
+                        boolean muted = volumeObj.optBoolean(DATA_VOLUME_MUTED,false);
+                        double level = volumeObj.optDouble(DATA_VOLUME_LEVEL, mPreVolumeLevel);
+                        if (muted) {
+                            changeVolume(0);
+                        } else {
+                            mPreVolumeLevel = level;
+                            
+                            changeVolume(level);
+                        }
 
                         return;
                     }

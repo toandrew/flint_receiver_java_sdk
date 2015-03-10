@@ -19,7 +19,7 @@ package com.infthink.flintreceiver.receiver;
 import org.json.JSONObject;
 
 import tv.matchstick.flintreceiver.FlintReceiverManager;
-import tv.matchstick.flintreceiver.R;
+import tv.matchstick.flintreceiver.ReceiverMessageBus;
 import tv.matchstick.flintreceiver.media.FlintMediaPlayer;
 import tv.matchstick.flintreceiver.media.FlintVideo;
 import android.app.Activity;
@@ -27,6 +27,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
@@ -47,7 +48,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.RelativeLayout;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 /**
@@ -88,6 +90,13 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
 
     private static final String APPID = "~flintplayer";
 
+    private static final String CUST_MESSAGE_NAMESPACE = "urn:flint:com.infthink.flintreceiver.receiver";
+
+    // custom message which will be send back to Sender Apps.
+    private JSONObject mCustMessage;
+
+    private ReceiverMessageBus mCustMessageReceiverMessageBus = null;
+
     private static final int PLAYER_MSG_LOAD = 1;
     private static final int PLAYER_MSG_PLAY = 2;
     private static final int PLAYER_MSG_PAUSE = 3;
@@ -116,6 +125,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     private boolean mMuted = false;
 
     private double mVolume = 0; // please note the category: "0.0" ~ "1.0"
+
+    private ImageView mLogo;
 
     /**
      * Use the followings to process all standard media events: LOAD, PLAY,
@@ -231,6 +242,13 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
         public void setVolume(double volume) {
             mVolume = volume; // save this volume.
 
+            // change muted status
+            if (mVolume == 0) {
+                mMuted = true;
+            } else {
+                mMuted = false;
+            }
+
             Message msg = mHandler.obtainMessage();
             msg.what = PLAYER_MSG_CHANGE_VOLUME;
             mHandler.sendMessage(msg);
@@ -306,6 +324,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             }
         });
 
+        mLogo = (ImageView) findViewById(R.id.logo);
+
         mSurfaceView = (SurfaceView) findViewById(R.id.surface);
 
         mSurfaceHolder = mSurfaceView.getHolder();
@@ -316,6 +336,12 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
         int maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         mVolume = (float) am.getStreamVolume(AudioManager.STREAM_MUSIC)
                 / (float) maxVolume;
+
+        if (mVolume == 0) {
+            mMuted = true;
+        } else {
+            mMuted = false;
+        }
 
         // init flint related objects
         init();
@@ -427,8 +453,10 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                             "Media is WAITING");
                     break;
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
+                    if (mMediaPlayer.isPlaying()) {
+                        mFlintVideo.notifyEvents(FlintVideo.PLAYING,
+                                "Media is PLAYING");
+                    }
                     break;
                 case MediaPlayer.MEDIA_INFO_UNKNOWN:
                     mFlintVideo.notifyEvents(FlintVideo.PLAYING,
@@ -460,6 +488,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 // TODO Auto-generated method stub
 
                 Log.e(TAG, "onPrepared![" + mp.getDuration() + "]");
+                
+                // hide logo
+                mLogo.setVisibility(View.GONE);
 
                 // set Flint related
                 mFlintVideo.setDuration(mp.getDuration());
@@ -486,6 +517,11 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
 
                 // notify sender app this SEEKED event.
                 mFlintVideo.notifyEvents(FlintVideo.SEEKED, "Media SEEKED");
+
+                // notify sender app that our current status is in PAUSE state?
+                if (!mMediaPlayer.isPlaying()) {
+                    mFlintVideo.notifyEvents(FlintVideo.PAUSE, "Media PAUSED?");
+                }
             }
 
         });
@@ -546,10 +582,38 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             public boolean onMediaMessage(final String payload) {
                 // TODO, here you can process all media messages.
 
-                Log.e(TAG, "onMediaMessages: " + payload);
+                Log.e(TAG, "onMediaMessage: " + payload);
                 return false;
             }
         };
+
+        // used to receive cust message from sender app.
+        mCustMessageReceiverMessageBus = new ReceiverMessageBus(
+                CUST_MESSAGE_NAMESPACE) {
+
+            @Override
+            public void onPayloadMessage(final String payload,
+                    final String senderId) {
+                // TODO Auto-generated method stub
+
+                // process CUSTOM messages received from sender apps.
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        // TODO Auto-generated method stub
+                        Toast.makeText(getApplicationContext(),
+                                "Got user messages![" + payload + "]",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                });
+
+            }
+        };
+
+        mFlintReceiverManager.setMessageBus(CUST_MESSAGE_NAMESPACE,
+                mCustMessageReceiverMessageBus);
 
         mFlintReceiverManager.open();
     }
@@ -592,6 +656,11 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             }
 
             mFlintVideo.notifyEvents(FlintVideo.PLAY, "PLAY Media");
+
+            // Here show how to send custom message to sender apps.
+            mCustMessage = new JSONObject();
+            mCustMessage.put("hello", "PLAY Media!");
+            mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -622,6 +691,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             if (mMediaPlayer != null) {
                 mMediaPlayer.seekTo(msec);
             }
+
+            // notify seeking event to sender apps!!!
+            mFlintVideo.notifyEvents(FlintVideo.WAITING, "Media VOLUMECHANGED");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -660,7 +732,19 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
      * Send CUSTOM MESSAGE events to Sender Apps.
      */
     private void doSendMessage() {
+        // Here show how to send custom message to sender apps.
+        // mCustMessage = new JSONObject();
+        // mCustMessage.put("hello", "PLAY Media!");
+        // mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
 
+        if (mCustMessageReceiverMessageBus != null && mCustMessage != null) {
+            Log.e(TAG, "doSendMessage!" + mCustMessage);
+
+            mCustMessageReceiverMessageBus.send(mCustMessage.toString(), null); // null:
+                                                                                // send
+                                                                                // to
+                                                                                // all.
+        }
     }
 
     /**
@@ -675,6 +759,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             // notify that media player is stopped!
             mFlintVideo.notifyEvents(FlintVideo.ENDED, "Media ENDED");
 
+            // STOP received? treated it as FINISHED!
+            mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -686,6 +772,10 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     private void doFinished() {
         Toast.makeText(getApplicationContext(), "The video is finished!",
                 Toast.LENGTH_SHORT).show();
+
+        // show logo
+        mLogo.setVisibility(View.VISIBLE);
+        mSurfaceView.setBackgroundColor(Color.BLACK);
     }
 
     /**
@@ -709,7 +799,7 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
 
         if (width != 0 && height != 0) {
             // LayoutParams params = mSurface.getLayoutParams();
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                     displayWith, displayHeight);
 
             if (width * displayHeight > displayWith * height) {
