@@ -655,6 +655,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 Log.e(TAG, "mMediaPlayer is null?!");
             }
         } catch (Exception e) {
+            // notify sender app that some error happened?
+            mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
+            
             e.printStackTrace();
         }
     }
