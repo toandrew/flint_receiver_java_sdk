@@ -137,6 +137,8 @@ public class MediaPlayerActivity extends Activity {
 
     private double mVolume = 0; // please note the category: "0.0" ~ "1.0"
 
+    private boolean mIsHardwareDecoder = true; // default to true.
+
     /**
      * Use the followings to process all standard media events: LOAD, PLAY,
      * PAUSE,etc
@@ -301,7 +303,7 @@ public class MediaPlayerActivity extends Activity {
         }
 
         mVideoView = new VideoView(this);
-        
+
         // Hardware Decoder? default
         mVideoView.setHardwareDecoder(true);
 
@@ -356,8 +358,9 @@ public class MediaPlayerActivity extends Activity {
                                 "Media is PLAYING");
                     } else {
                         Log.e(TAG, "MEDIA_INFO_BUFFERING_END: waiting!!!?!");
-                        
-                        // this should be a workaround for the seek issue of VideoView in PAUSE state.
+
+                        // this should be a workaround for the seek issue of
+                        // VideoView in PAUSE state.
                         mFlintVideo.notifyEvents(FlintVideo.SEEKED,
                                 "Media is WAITING?");
                         mFlintVideo.notifyEvents(FlintVideo.PAUSE,
@@ -625,9 +628,35 @@ public class MediaPlayerActivity extends Activity {
                     @Override
                     public void run() {
                         // TODO Auto-generated method stub
-                        Toast.makeText(getApplicationContext(),
-                                "Got user messages![" + payload + "]",
-                                Toast.LENGTH_SHORT).show();
+                        try {
+                            JSONObject obj = new JSONObject(payload);
+                            mIsHardwareDecoder = obj.optBoolean(
+                                    "HARDWARE_DECODER", true);
+                            if (mIsHardwareDecoder) {
+                                mVideoView.setHardwareDecoder(true);
+
+                                Toast.makeText(getApplicationContext(),
+                                        "Use Hardware Decoder!!!",
+                                        Toast.LENGTH_SHORT).show();
+                            } else {
+                                mVideoView.setHardwareDecoder(false);
+
+                                Toast.makeText(getApplicationContext(),
+                                        "Use Software Decoder!!!",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+
+                            // Here show how to send custom message to sender
+                            // apps.
+                            mCustMessage = new JSONObject();
+                            mCustMessage.put("isHardwareDecoder",
+                                    mIsHardwareDecoder);
+                            mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
+                        } catch (Exception e) {
+                            Toast.makeText(getApplicationContext(),
+                                    "Other User message[" + payload + "!!!",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }
 
                 });
@@ -675,11 +704,6 @@ public class MediaPlayerActivity extends Activity {
 
             // hide media controller?
             mFlintMediaController.hide();
-
-            // Here show how to send custom message to sender apps.
-            mCustMessage = new JSONObject();
-            mCustMessage.put("hello", "PLAY Media!");
-            mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }

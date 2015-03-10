@@ -25,12 +25,13 @@
         android:orientation="vertical" >
 
         <!-- Current device -->
-    <android.support.v7.app.MediaRouteButton
-                android:id="@+id/media_route_button"
-                android:layout_width="wrap_content"
-                android:background="@android:color/transparent"
-                android:layout_height="wrap_content"/>
-    
+
+        <android.support.v7.app.MediaRouteButton
+            android:id="@+id/media_route_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent" />
+
         <TextView
             android:id="@+id/connected_device"
             android:layout_width="match_parent"
@@ -104,9 +105,9 @@
                 android:id="@+id/send_receive_controls_row_1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:focusable="true" 
-				android:focusableInTouchMode="true"  >
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:orientation="horizontal" >
 
                 <Button
                     android:id="@+id/send_cust_msg"
@@ -124,7 +125,20 @@
                     android:layout_gravity="fill"
                     android:layout_weight="1"
                     android:enabled="true"
-                    android:text="Hello world!" />
+                    android:text="Hello world!" >
+                </EditText>
+
+                <CheckBox
+                    android:id="@+id/device_hardware_decoder"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="15dp"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="Use Hardware Decoder" 
+                    android:enabled="false"/>
             </LinearLayout>
 
             <LinearLayout
@@ -132,7 +146,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal" >
-                
+
                 <EditText
                     android:id="@+id/received_msg"
                     android:layout_width="0dp"
@@ -204,8 +218,8 @@
             android:layout_gravity="center"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
-            android:gravity="center_horizontal" 
-            android:visibility="gone">
+            android:gravity="center_horizontal"
+            android:visibility="gone" >
 
             <CheckBox
                 android:id="@+id/autoplay_checkbox"
@@ -286,8 +300,8 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="15dp"
             android:gravity="center_horizontal"
-            android:orientation="horizontal" 
-            android:visibility="gone">
+            android:orientation="horizontal"
+            android:visibility="gone" >
 
             <TextView
                 android:layout_width="wrap_content"
@@ -329,7 +343,7 @@
             android:layout_marginBottom="5dp"
             android:layout_marginTop="15dp"
             android:gravity="center_horizontal"
-            android:orientation="horizontal">
+            android:orientation="horizontal" >
 
             <TextView
                 android:layout_width="wrap_content"
@@ -361,7 +375,6 @@
                 android:layout_weight="0"
                 android:text="@string/mute" />
         </LinearLayout>
-
     </LinearLayout>
 
 </ScrollView>

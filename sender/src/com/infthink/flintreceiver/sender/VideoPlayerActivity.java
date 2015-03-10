@@ -32,6 +32,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -90,6 +91,8 @@ public class VideoPlayerActivity extends FragmentActivity implements
     private FlintVideoManager mFlintVideoManager;
 
     MediaRouteButton mMediaRouteButton;
+    
+    private CheckBox mHardwareDecoderCheckbox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +113,20 @@ public class VideoPlayerActivity extends FragmentActivity implements
         mStartMediaButton = (Button) findViewById(R.id.select_media_button);
         mPlayPauseButton = (Button) findViewById(R.id.pause_play);
         mStopMediaButton = (Button) findViewById(R.id.stop);
+        
+        mHardwareDecoderCheckbox = (CheckBox)findViewById(R.id.device_hardware_decoder);
+        mHardwareDecoderCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView,
+                    boolean isChecked) {
+                // TODO Auto-generated method stub
+                if (mFlintVideoManager != null) {
+                    mFlintVideoManager.setHardwareDecoder(isChecked);
+                }
+            }
+            
+        });
         mAutoplayCheckbox = (CheckBox) findViewById(R.id.autoplay_checkbox);
 
         mSeekBar = (SeekBar) findViewById(R.id.seek_bar);
@@ -589,8 +605,9 @@ public class VideoPlayerActivity extends FragmentActivity implements
         }
 
         mSendCustMessageButton.setEnabled(hasMediaConnection);
-
-        mAutoplayCheckbox.setEnabled(hasDeviceConnection && hasAppConnection);
+        mHardwareDecoderCheckbox.setEnabled(hasMediaConnection && !hasMedia);
+        
+        mAutoplayCheckbox.setEnabled(hasDeviceConnection);
 
         mStartMediaButton.setEnabled(hasMediaConnection);
         mStopMediaButton.setEnabled(hasMediaConnection && hasMedia);

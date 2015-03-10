@@ -35,6 +35,8 @@ public abstract class FlintMsgChannel implements Flint.MessageReceivedCallback {
     private static final String KEY_COMMAND = "command";
     private static final String KEY_SHOW = "show";
     private static final String KEY_MSG = "msg";
+    
+    private static final String KEY_SET_HARDWARE_DECODER = "HARDWARE_DECODER";
 
     protected FlintMsgChannel() {
     }
@@ -64,6 +66,23 @@ public abstract class FlintMsgChannel implements Flint.MessageReceivedCallback {
         }
     }
 
+    /**
+     * Set device whether use hardware decoder.
+     * 
+     * @param apiClient
+     * @param flag
+     */
+    public final void setHardwareDecoder(FlintManager apiClient, boolean flag) {
+        try {
+            Log.d(TAG, "setHardwareDecoder: " + flag);
+            JSONObject payload = new JSONObject();
+            payload.put(KEY_SET_HARDWARE_DECODER, flag);
+            sendMessage(apiClient, payload.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "Cannot create object to set hardware decoder!", e);
+        }
+    }
+    
     @Override
     public void onMessageReceived(FlintDevice flingDevice, String namespace,
             String message) {

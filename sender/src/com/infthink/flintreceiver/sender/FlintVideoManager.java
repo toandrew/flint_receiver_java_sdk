@@ -216,6 +216,7 @@ public class FlintVideoManager {
 
             mMediaInfo = new MediaInfo.Builder(
                     "http://fling.matchstick.tv/droidream/samples/TearsOfSteel.mp4")
+                    //"http://fling.infthink.com/droidream/samples/Dengziqi-1.mp4")
                     .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
                     .setContentType("video/mp4").setMetadata(metadata).build();
         }
@@ -794,5 +795,18 @@ public class FlintVideoManager {
 
         protected void onFinished() {
         }
+    }
+    
+    /**
+     * Set custom message to device. let device use hardware decoder or not
+     * 
+     * @param flag
+     */
+    public void setHardwareDecoder(boolean flag) {
+        if (mApiClient == null || !mApiClient.isConnected()) {
+            return;
+        }
+        
+        mFlintMsgChannel.setHardwareDecoder(mApiClient, flag);
     }
 }
