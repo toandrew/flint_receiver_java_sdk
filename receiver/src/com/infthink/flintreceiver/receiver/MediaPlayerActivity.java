@@ -303,7 +303,7 @@ public class MediaPlayerActivity extends Activity {
         mVideoView = new VideoView(this);
         
         // Hardware Decoder? default
-        mVideoView.setHardwareDecoder(true);
+        mVideoView.setHardwareDecoder(false);
 
         mVideoView
                 .setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
@@ -363,11 +363,6 @@ public class MediaPlayerActivity extends Activity {
                         mFlintVideo.notifyEvents(FlintVideo.PAUSE,
                                 "Media is PAUSED?");
                     }
-                    break;
-                case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
-                    Log.e(TAG, "playing????!");
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
                     break;
                 }
 
