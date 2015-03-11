@@ -630,8 +630,7 @@ public class MediaPlayerActivity extends Activity {
                         // TODO Auto-generated method stub
                         try {
                             JSONObject obj = new JSONObject(payload);
-                            mIsHardwareDecoder = obj.optBoolean(
-                                    "HARDWARE_DECODER", true);
+                            mIsHardwareDecoder = obj.getBoolean("HARDWARE_DECODER");
                             if (mIsHardwareDecoder) {
                                 mVideoView.setHardwareDecoder(true);
 
@@ -691,6 +690,14 @@ public class MediaPlayerActivity extends Activity {
 
             // hide media controller?
             mFlintMediaController.hide();
+            
+            
+            // Here show how to send custom message to sender
+            // apps.
+            mCustMessage = new JSONObject();
+            mCustMessage.put("isHardwareDecoder",
+                    mIsHardwareDecoder);
+            mHandler.sendEmptyMessage(PLAYER_MSG_SEND_MESSAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }
