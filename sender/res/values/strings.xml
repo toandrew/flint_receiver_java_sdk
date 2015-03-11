@@ -24,7 +24,7 @@
     <string name="no_time">--:--</string>
     <string name="start_session">Start Session</string>
     <string name="end_session">End Session</string>
-    <string name="start">Start</string>
+    <string name="load">Load Media</string>
     <string name="play">Play</string>
     <string name="pause">Pause</string>
     <string name="stop">Stop</string>
