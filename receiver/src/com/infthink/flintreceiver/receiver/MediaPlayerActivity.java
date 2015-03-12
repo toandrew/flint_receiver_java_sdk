@@ -138,6 +138,8 @@ public class MediaPlayerActivity extends Activity {
     private double mVolume = 0; // please note the category: "0.0" ~ "1.0"
 
     private boolean mIsHardwareDecoder = true; // default to true.
+    
+    private boolean mMediaLoaded = false;
 
     /**
      * Use the followings to process all standard media events: LOAD, PLAY,
@@ -240,6 +242,8 @@ public class MediaPlayerActivity extends Activity {
 
             try {
                 if (mVideoView != null) {
+                    mCurrentTime = mVideoView.getCurrentPosition();
+                    Log.e(TAG, "getCurrentTime[" + mVideoView.getCurrentPosition() + "][" + mCurrentTime + "]");
                     return mVideoView.getCurrentPosition();
                 }
             } catch (Exception e) {
@@ -276,6 +280,17 @@ public class MediaPlayerActivity extends Activity {
             // TODO Auto-generated method stub
 
             return mMuted;
+        }
+        
+        @Override
+        public void notifyEvents(String type, String data) {
+            if (!mMediaLoaded) {
+                Log.e(TAG, "The media is in finished state. So ignore event[" + type + "][" + data + "]");
+                return;
+            }
+            
+            // ready to process events.
+            super.notifyEvents(type, data);
         }
     };
 
@@ -314,7 +329,7 @@ public class MediaPlayerActivity extends Activity {
                     public void onBufferingUpdate(MediaPlayer mp, int percent) {
                         // TODO Auto-generated method stub
 
-                        Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
+                        //Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
                     }
                 });
 
@@ -328,7 +343,9 @@ public class MediaPlayerActivity extends Activity {
                         + "]");
 
                 mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
-
+                
+                mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
+                
                 return false;
             }
 
@@ -346,6 +363,9 @@ public class MediaPlayerActivity extends Activity {
                 mFlintVideo.setCurrentTime(mp.getCurrentPosition());
 
                 switch (what) {
+                case MediaPlayer.MEDIA_INFO_NOT_SEEKABLE:
+                    Toast.makeText(MediaPlayerActivity.this, "The media cannot be seeked!", Toast.LENGTH_SHORT).show();
+                    break;
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
                     Log.e(TAG, "waiting?!");
                     mFlintVideo.notifyEvents(FlintVideo.WAITING,
@@ -439,7 +459,7 @@ public class MediaPlayerActivity extends Activity {
                     @Override
                     public void seekEnd(long position) {
                         // TODO Auto-generated method stub
-
+                        Log.e(TAG, "seekEnd!");
                     }
 
                     @Override
@@ -449,6 +469,7 @@ public class MediaPlayerActivity extends Activity {
                         // called when user clicked the "play" button in DONGLE
                         // side.
                         // in order to let sender app's know current status.
+                        Log.e(TAG, "startMedia!");
                         mFlintVideo.notifyEvents(FlintVideo.PLAYING,
                                 "Media is PLAYING");
                     }
@@ -460,20 +481,25 @@ public class MediaPlayerActivity extends Activity {
                         // called when user clicked the "pause" button in DONGLE
                         // side.
                         // in order to let sender app's know current status.
+                        Log.e(TAG, "pauseMedia!");
                         mFlintVideo.notifyEvents(FlintVideo.PAUSE,
                                 "PAUSE Media");
                     }
 
                     @Override
                     public long getCurrentPosition() {
+                        Log.e(TAG, "getCurrentPosition!");
+                        
                         // TODO Auto-generated method stub
-                        return 0;
+                        return (long) mFlintVideo.getCurrentTime();
                     }
 
                     @Override
                     public long getDuration() {
+                        Log.e(TAG, "getDuration!");
+                        
                         // TODO Auto-generated method stub
-                        return 0;
+                        return (long) mFlintVideo.getDuration();
                     }
 
                 });
@@ -678,7 +704,9 @@ public class MediaPlayerActivity extends Activity {
      * Process LOAD media player event
      */
     private void doLoad() {
-
+        // All media file should first be loaded.
+        mMediaLoaded = true;
+        
         try {
             if (mVideoView != null) {
                 mVideoView.setVideoPath(mFlintVideo.getUrl());
@@ -743,18 +771,27 @@ public class MediaPlayerActivity extends Activity {
      * Process SEEK media player event.
      */
     private void doSeek(int msec) {
-        Log.e(TAG, "seek![" + msec);
+        Log.e(TAG, "seek![" + msec + "][" + mVideoView.getDuration() + "]");
 
         try {
             if (mVideoView != null) {
-                mVideoView.seekTo(msec);
+                // stop movie directly?
+                if (msec == mVideoView.getDuration() && mVideoView.getDuration() != 0) {
+                    Log.e(TAG, "SEEK TO END!stop movie directly?!");
+                    
+                    mFlintVideo.notifyEvents(FlintVideo.SEEKED, "Media SEEKED");
+                    
+                    doStop();
+                } else {
+                    mVideoView.seekTo(msec);
+
+                    // notify seeking event to sender apps!!!
+                    mFlintVideo.notifyEvents(FlintVideo.WAITING, "Media SEEKED");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        // notify seeking event to sender apps!!!
-        mFlintVideo.notifyEvents(FlintVideo.WAITING, "Media VOLUMECHANGED");
     }
 
     /**
@@ -832,5 +869,7 @@ public class MediaPlayerActivity extends Activity {
 
         Toast.makeText(getApplicationContext(), "The video is finished!",
                 Toast.LENGTH_SHORT).show();
+        
+        mMediaLoaded = false;
     }
 }
