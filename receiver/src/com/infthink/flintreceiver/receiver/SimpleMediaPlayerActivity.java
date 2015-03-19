@@ -131,6 +131,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     private ImageView mLogo;
 
     private String mCurrentVideoUrl = null;
+    
+    private boolean mMediaLoaded = false;
 
     /**
      * Use the followings to process all standard media events: LOAD, PLAY,
@@ -233,6 +235,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
 
             try {
                 if (mMediaPlayer != null) {
+                    mCurrentTime = mMediaPlayer.getCurrentPosition();
+                    Log.e(TAG, "getCurrentTime[" + mMediaPlayer.getCurrentPosition() + "][" + mCurrentTime + "]");
                     return mMediaPlayer.getCurrentPosition();
                 }
             } catch (Exception e) {
@@ -270,6 +274,17 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             // TODO Auto-generated method stub
 
             return mMuted;
+        }
+        
+        @Override
+        public void notifyEvents(String type, String data) {
+            if (!mMediaLoaded) {
+                Log.e(TAG, "The media is in finished state. So ignore event[" + type + "][" + data + "]");
+                return;
+            }
+            
+            // ready to process events.
+            super.notifyEvents(type, data);
         }
     };
 
@@ -418,7 +433,7 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                     public void onBufferingUpdate(MediaPlayer mp, int percent) {
                         // TODO Auto-generated method stub
 
-                        Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
+                        //Log.e(TAG, "onBufferingUpdate:percent[" + percent + "]");
                     }
 
                 });
@@ -434,7 +449,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
 
                 // notify ERROR to sender app when error happened?
                 mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
-
+                
+                mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
+                
                 return false;
             }
 
@@ -452,6 +469,10 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 mFlintVideo.setCurrentTime(mp.getCurrentPosition());
 
                 switch (what) {
+                case MediaPlayer.MEDIA_INFO_NOT_SEEKABLE:
+                    Toast.makeText(SimpleMediaPlayerActivity.this, "The media cannot be seeked!", Toast.LENGTH_SHORT).show();
+                    break;
+
                 case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
                     mFlintVideo.notifyEvents(FlintVideo.PLAYING,
                             "Media is PLAYING");
@@ -464,23 +485,16 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                     if (mMediaPlayer.isPlaying()) {
                         mFlintVideo.notifyEvents(FlintVideo.PLAYING,
                                 "Media is PLAYING");
+                    }else {
+                        Log.e(TAG, "MEDIA_INFO_BUFFERING_END: waiting!!!?!");
+
+                        // this should be a workaround for the seek issue of
+                        // VideoView in PAUSE state.
+                        mFlintVideo.notifyEvents(FlintVideo.SEEKED,
+                                "Media is WAITING?");
+                        mFlintVideo.notifyEvents(FlintVideo.PAUSE,
+                                "Media is PAUSED?");
                     }
-                    break;
-                case MediaPlayer.MEDIA_INFO_UNKNOWN:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
-                    break;
-                case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
-                    break;
-                case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
-                    break;
-                case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
-                    mFlintVideo.notifyEvents(FlintVideo.PLAYING,
-                            "Media is PLAYING");
                     break;
                 }
 
@@ -527,9 +541,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 mFlintVideo.notifyEvents(FlintVideo.SEEKED, "Media SEEKED");
 
                 // notify sender app that our current status is in PAUSE state?
-                if (!mMediaPlayer.isPlaying()) {
-                    mFlintVideo.notifyEvents(FlintVideo.PAUSE, "Media PAUSED?");
-                }
+                //if (!mMediaPlayer.isPlaying()) {
+                //    mFlintVideo.notifyEvents(FlintVideo.PAUSE, "Media PAUSED?");
+                //}
             }
 
         });
@@ -630,7 +644,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
      * Process LOAD media player event
      */
     private void doLoad() {
-
+        // All media file should first be loaded.
+        mMediaLoaded = true;
+        
         try {
             if (mMediaPlayer != null) {
 
@@ -657,7 +673,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
         } catch (Exception e) {
             // notify sender app that some error happened?
             mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
-            
+
+            mHandler.sendEmptyMessage(PLAYER_MSG_FINISHED);
+
             e.printStackTrace();
         }
     }
@@ -788,6 +806,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     private void doFinished() {
         Toast.makeText(getApplicationContext(), "The video is finished!",
                 Toast.LENGTH_SHORT).show();
+
+		mMediaLoaded = false;
 
         // in order to show logo
         mLogo.setVisibility(View.VISIBLE);
