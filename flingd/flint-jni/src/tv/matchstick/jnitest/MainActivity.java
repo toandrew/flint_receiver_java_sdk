@@ -135,12 +135,12 @@ public class MainActivity extends Activity implements Flint.Callback {
 
         // if it's a default media app, let's use android native media player.
         if (FLINT_DEFAULT_MEDIA_APP_URL.equals(url)) {
-            intent.setClassName("com.infthink.flint",
+            intent.setClassName("com.infthink.flintreceiver.receiver",
                     "com.infthink.flintreceiver.receiver.SimpleMediaPlayerActivity");
         } else {
-            // use web to open Flint receiver apps.
-            intent.setClassName("com.infthink.flint",
-                    "com.infthink.flint.FlintContainerActivity");
+            // use Web(crosswalk) to open Flint receiver apps.
+            intent.setClassName("com.infthink.flintreceiver.receiver",
+                    "com.infthink.flintreceiver.receiver.FlintContainerActivity");
         }
 
         MainActivity.this.startActivity(intent);
