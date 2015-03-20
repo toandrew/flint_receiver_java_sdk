@@ -671,6 +671,18 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 Log.e(TAG, "mMediaPlayer is null?!");
             }
         } catch (Exception e) {
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    // TODO Auto-generated method stub
+                    Toast.makeText(getApplicationContext(),
+                            "Sorry, this video cannot be played!",
+                            Toast.LENGTH_SHORT).show();
+                }
+
+            });
+            
             // notify sender app that some error happened?
             mFlintVideo.notifyEvents(FlintVideo.ERROR, "Media ERROR");
 
@@ -804,8 +816,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
      * Do something when video is finished!
      */
     private void doFinished() {
-        Toast.makeText(getApplicationContext(), "The video is finished!",
-                Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(), "The video is finished!",
+//                Toast.LENGTH_SHORT).show();
 
 		mMediaLoaded = false;
 
