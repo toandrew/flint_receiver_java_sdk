@@ -13,7 +13,7 @@
 2. **receiver/**：receiver应用程序，使用了Java Receiver SDK ，Vitamio以及Crosswalk。
 >* **SimpleMediaPlayerActivity.java**:采用Android标准MediaPlayer播放的Flint媒体类receiver应用。
 >* **MediaPlayerActivity.java**: 使用vitamio VideoView控件播放视频的Flint媒体类receiver应用。
->* **FlintContainerActivity.java**: 使用web(crosswalk)做为容器以运行所有Flint应用(部分多媒体应用使用"a","b"方式)。
+>* **FlintContainerActivity.java**: 使用web(crosswalk)做为容器以运行所有Flint应用(部分Flint多媒体应用使用**SimpleMediaPlayerActivity.java**或**MediaPlayerActivity.java**方式, 见**MainActivity.java**)。
 
 3. **sdk/**：Flint Java Receiver SDK，主要解析Flint sender端发送过来的各种媒体控制消息。
 
