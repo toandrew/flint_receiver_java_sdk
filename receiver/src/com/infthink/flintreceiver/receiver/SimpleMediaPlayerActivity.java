@@ -392,7 +392,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        
+        Log.e(TAG, "onDestroy!");
+        
         try {
             mFlintMediaPlayer.stop(null);
 
@@ -508,7 +510,12 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 // TODO Auto-generated method stub
-
+                
+                // All media file should first be loaded.
+                mMediaLoaded = true;
+                
+                mMediaPlayer.start();
+                
                 Log.e(TAG, "onPrepared![" + mp.getDuration() + "]");
 
                 // hide logo
@@ -665,8 +672,8 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 mCurrentVideoUrl = mFlintVideo.getUrl();
 
                 mMediaPlayer.setDataSource(mFlintVideo.getUrl());
-                mMediaPlayer.prepare();
-                mMediaPlayer.start();
+                mMediaPlayer.prepareAsync();
+                //mMediaPlayer.start();
             } else {
                 Log.e(TAG, "mMediaPlayer is null?!");
             }
