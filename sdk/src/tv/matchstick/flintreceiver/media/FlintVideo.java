@@ -75,6 +75,8 @@ public abstract class FlintVideo {
     private double mPlaybackRate = 0;
 
     private String mUrl;
+    
+    private String mTitle;
 
     private boolean mAutoPlay = true;
 
@@ -191,6 +193,24 @@ public abstract class FlintVideo {
      */
     public String getUrl() {
         return mUrl;
+    }
+    
+    /**
+     * Set play title
+     * 
+     * @param title
+     */
+    public void setTitle(String title) {
+        mTitle = title;
+    }
+
+    /**
+     * Get play title
+     * 
+     * @return
+     */
+    public String getTitle() {
+        return mTitle;
     }
 
     /**

@@ -465,6 +465,8 @@ public class FlintMediaPlayer {
         mUrl = url;
 
         mFlintVideo.setUrl(mUrl);
+        
+        mFlintVideo.setTitle(mTitle);
 
         mFlintVideo.setAutoPlay(true);
 
