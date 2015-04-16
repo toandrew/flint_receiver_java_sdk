@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2013-2015, The OpenFlint Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package com.infthink.flintreceiver.receiver;
-
-import org.xwalk.core.XWalkView;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -27,21 +24,33 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Window;
+import android.view.WindowManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebSettings.PluginState;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.SslErrorHandler;
+import android.net.http.SslError;
 
 /**
- * Use to contain all receivers.
+ * Use to contain all fallback Flint receivers.
+ * 
+ * This Activity will use WebView as a container on Android platform( <= 4.2 ?)
+ * 
+ * It may be very useful in OLD android TV Sets.
  */
 public class FlintContainerActivity extends Activity {
     private static final String TAG = "FlintContainerActivity";
 
-    private XWalkView mXWalkView;
+    private WebView mWebView;
 
     BroadcastReceiver mFlintReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
-            Log.e(TAG, "Ready to call finish!!!");
+            Log.e(TAG, "[Fallback]Ready to call finish!!!");
             finish();
-            Log.e(TAG, "End to call finish!!!");
+            Log.e(TAG, "[Fallback]End to call finish!!!");
         }
     };
 
@@ -56,7 +65,39 @@ public class FlintContainerActivity extends Activity {
 
         setContentView(R.layout.flint_container);
 
-        mXWalkView = (XWalkView) findViewById(R.id.container_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+
+        mWebView = (WebView) findViewById(R.id.container_main);
+        mWebView.setWebChromeClient(new WebChromeClient());
+        
+        WebSettings webSettings = mWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setPluginState(PluginState.ON);
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setSupportMultipleWindows(false);
+
+        WebViewClient mWebviewClient = new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Log.e(TAG, "shouldOverrideUrlLoading:url[" + url + "]");
+                view.loadUrl(url);
+                return true;
+            }
+
+            @Override
+            public void onReceivedSslError(WebView view,
+                    SslErrorHandler handler, SslError error) {
+                Log.e(TAG, "onReceivedSslError:"+ error.toString());
+                handler.proceed();
+            }
+            
+            @Override
+            public void onLoadResource(WebView view, String url) {
+                Log.e(TAG, "onLoadResource: " + url);
+            }
+        };
+        mWebView.setWebViewClient(mWebviewClient);
 
         IntentFilter filter = new IntentFilter("fling.action.stop_receiver");
         registerReceiver(mFlintReceiver, filter);
@@ -70,7 +111,7 @@ public class FlintContainerActivity extends Activity {
 
         Log.e(TAG, "Ready to load:" + startupUrl);
 
-        mXWalkView.load(startupUrl, null);
+        mWebView.loadUrl(startupUrl);
     }
 
     @Override
@@ -79,9 +120,9 @@ public class FlintContainerActivity extends Activity {
 
         Log.e(TAG, "onResume");
 
-        if (mXWalkView != null) {
-            mXWalkView.resumeTimers();
-            mXWalkView.onShow();
+        if (mWebView != null) {
+            mWebView.resumeTimers();
+            mWebView.onResume();
         }
     }
 
@@ -91,9 +132,9 @@ public class FlintContainerActivity extends Activity {
 
         Log.e(TAG, "onPause");
 
-        if (mXWalkView != null) {
-            mXWalkView.pauseTimers();
-            mXWalkView.onHide();
+        if (mWebView != null) {
+            mWebView.pauseTimers();
+            mWebView.onPause();
         }
     }
 
@@ -114,7 +155,9 @@ public class FlintContainerActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow()
+                .clearFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
         Log.e(TAG, "onDestroy!");
 
@@ -122,23 +165,21 @@ public class FlintContainerActivity extends Activity {
             unregisterReceiver(mFlintReceiver);
         }
 
-        if (mXWalkView != null) {
-            mXWalkView.onDestroy();
+        if (mWebView != null) {
+            mWebView.destroy();
         }
+
+        super.onDestroy();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (mXWalkView != null) {
-            mXWalkView.onActivityResult(requestCode, resultCode, data);
-        }
+        // TODO
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
-        if (mXWalkView != null) {
-            mXWalkView.onNewIntent(intent);
-        }
+        // TODO
     }
 
     private static String getUrlFromIntent(Intent intent) {
