@@ -151,6 +151,8 @@ public class FlintContainerActivity extends Activity {
         super.onStop();
 
         Log.e(TAG, "onStop");
+
+        finish();
     }
 
     @Override
@@ -161,8 +163,11 @@ public class FlintContainerActivity extends Activity {
 
         Log.e(TAG, "onDestroy!");
 
-        if (mFlintReceiver != null) {
-            unregisterReceiver(mFlintReceiver);
+        try {
+            if (mFlintReceiver != null) {
+                unregisterReceiver(mFlintReceiver);
+            }
+        } catch (Exception e) {
         }
 
         if (mWebView != null) {

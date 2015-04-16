@@ -201,6 +201,24 @@ public class Flint {
     }
 
     /**
+     * Set Flint model name
+     *
+     * @param name
+     */
+    public void setModelName(String name) {
+        native_setModelName(name);
+    }
+
+    /**
+     * Get Flint model name
+     *
+     * @return
+     */
+    public String getModelName() {
+        return native_getModelName();
+    }
+
+    /**
      * Get current Flint service's running status.
      * 
      * @return
@@ -622,6 +640,10 @@ public class Flint {
     private native String native_getDeviceName();
 
     private native void native_setDeviceName(String deviceName);
+
+    private native String native_getModelName();
+
+    private native void native_setModelName(String modelName);
 
     private native boolean native_isRunning(int ptr);
 
