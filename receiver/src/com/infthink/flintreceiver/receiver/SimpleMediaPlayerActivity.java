@@ -547,6 +547,9 @@ public class SimpleMediaPlayerActivity extends Activity implements Callback {
                 // notify sender app this SEEKED event.
                 mFlintVideo.notifyEvents(FlintVideo.SEEKED, "Media SEEKED");
 
+                // fix play status issue in some tv sets.
+                mFlintVideo.notifyEvents(FlintVideo.PLAYING, "Playing Media??");
+
                 // notify sender app that our current status is in PAUSE state?
                 //if (!mMediaPlayer.isPlaying()) {
                 //    mFlintVideo.notifyEvents(FlintVideo.PAUSE, "Media PAUSED?");
